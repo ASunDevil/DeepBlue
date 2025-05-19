@@ -274,3 +274,74 @@ The server will typically start on `http://127.0.0.1:8000`, and the MCP endpoint
     #     print(f"MCP tool call failed: {tool_result.error_message}")
     ```
 The `test_mcp_cpp_server.py` file contains functional integration tests that demonstrate client interaction with the `execute_cpp` tool.
+
+## Chrome Webpage Screenshot MCP Server
+
+### Overview
+`mcp_chrome_server.py` implements an MCP server exposing a `capture_webpage` tool. Its purpose is to take a screenshot of a given URL using a headless Chrome browser (via Playwright) running in a sandboxed Docker environment.
+
+### Core Execution Logic (`chrome_screenshot_taker.py` & `playwright_helper.py`)
+`chrome_screenshot_taker.py` orchestrates the process, using Docker to run `playwright_helper.py`. `playwright_helper.py` is the script that executes inside Docker using Playwright to control headless Chrome. Docker and a Playwright-compatible image (e.g., `mcr.microsoft.com/playwright/python`) are key dependencies.
+
+### Dependencies
+-   **For the MCP server (`mcp_chrome_server.py`)**:
+    -   The `mcp` Python package. Install with `pip install "mcp[cli]"`. This typically includes `uvicorn` for running the FastAPI-based server.
+-   **For the core screenshot runner (`chrome_screenshot_taker.py`)**:
+    -   **Docker**: Must be installed, running, and the user executing the script must have permissions to interact with the Docker daemon. The specified Docker image (e.g., `mcr.microsoft.com/playwright/python`) must be pullable.
+    -   Python standard libraries: `subprocess`, `json`, `base64`, `os`.
+    -   `playwright_helper.py` (and thus the Docker image) needs `playwright`.
+
+### Running the Server
+-   **Command:** `python mcp_chrome_server.py`
+-   **Default URL:** Typically `http://127.0.0.1:8000/mcp`.
+-   **Port Conflict Note:** If you have other MCP servers (like the bash or C++ tool servers described earlier) that also default to port 8000, you will need to configure one of them to use a different port or ensure only one is running at a time.
+-   **Helper Script Location:** `playwright_helper.py` must be in the same directory as `chrome_screenshot_taker.py` for the latter to find and mount it into Docker.
+
+### **CRITICAL SECURITY WARNINGS**
+1.  **Arbitrary URL Fetching Risks:** The `capture_webpage` tool fetches and renders content from arbitrary URLs. This can expose the server to risks like Server-Side Request Forgery (SSRF), attempts to access internal network resources, or rendering malicious web content (JavaScript execution happens in the headless browser).
+2.  **Browser Vulnerabilities:** Headless browsers, like any browser, can have vulnerabilities. Ensure the Docker image (e.g., `mcr.microsoft.com/playwright/python`) is kept up-to-date to include the latest browser security patches.
+3.  **Sandboxing (Docker & Playwright):** The server uses Docker and Playwright's browser contexts to provide significant sandboxing. This is a critical defense layer. The `--network=host` option in `chrome_screenshot_taker.py` simplifies development but has security trade-offs; for production, a more restrictive network setup for the Docker container is advised.
+4.  **MCP Server Authentication (Essential):** This tool **MUST NOT** be exposed to untrusted networks or users without robust authentication and authorization implemented at the MCP level (e.g., using OAuth 2.0, as indicated by commented-out sections in `mcp_chrome_server.py`).
+5.  **Resource Consumption:** Fetching and rendering web pages can be resource-intensive (CPU, memory, network). Implement rate limiting or other controls if exposing this to multiple users.
+
+### Interacting with the `capture_webpage` Tool
+-   **Tool Name:** `capture_webpage`
+-   **Arguments:**
+    -   `url` (str): The URL of the webpage to screenshot.
+    -   `width` (int, optional): Desired viewport width in pixels. Defaults to 1280.
+    -   `height` (int, optional): Desired viewport height in pixels. Defaults to 720.
+-   **Return Value (on Success):**
+    -   An `mcp.types.Image` object. The image is in PNG format.
+    -   The `Image` object has attributes like `data` (bytes of the PNG) and `format` (string, e.g., 'png').
+-   **Return Value (on Failure):**
+    -   If an error occurs (e.g., navigation timeout, invalid URL, screenshot process failure), the MCP tool call will result in `tool_result.success = False` and `tool_result.error` will be an `mcp.types.ToolError` object containing details.
+    -   The `tool_result.error.message` field will provide more specific information about the failure.
+-   **Conceptual Client Example:**
+    ```python
+    # Conceptual client example (assumes an MCP session 'session' is active)
+    # See test_mcp_chrome_server.py for a runnable client example.
+    # Ensure 'mcp' and 'httpx' packages are installed: pip install "mcp[cli]" httpx
+    # from mcp import types # If you need to check isinstance(..., types.Image)
+
+    target_url = "https://www.example.com"
+    
+    # tool_result = await session.call_tool(
+    #     "capture_webpage",
+    #     {"url": target_url, "width": 1024, "height": 768}
+    # )
+    
+    # if tool_result.success:
+    #     image_content = tool_result.content # This should be an mcp.types.Image object
+    #     if isinstance(image_content, types.Image): # types from mcp
+    #         print(f"Screenshot successful! Format: {image_content.format}, Data length: {len(image_content.data)}")
+    #         # with open("mcp_screenshot.png", "wb") as f:
+    #         #     f.write(image_content.data)
+    #     else:
+    #         print(f"Screenshot successful, but content is not an Image object: {type(image_content)}")
+    # else:
+    #     if tool_result.error:
+    #         print(f"Screenshot failed: {tool_result.error.type} - {tool_result.error.message}")
+    #     else:
+    #         print("Screenshot failed with no error information.")
+    ```
+The `test_mcp_chrome_server.py` file contains functional integration tests that demonstrate client interaction with the `capture_webpage` tool.
