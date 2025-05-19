@@ -408,3 +408,29 @@ The `adk_code_assistant.py` script uses `MCPToolset.from_server` with `StdioServ
 *   **Tool Usage**: To actually interact with the agent (e.g., send it a query like "run ls -l"), you would typically use the `adk.runners.Runner` class as shown in the conceptual comments within `adk_code_assistant.py`, or by deploying/serving this agent using ADK's deployment options (like `adk web` or Agent Engine).
 
 **Security Note**: Remember the security warnings associated with each MCP server, especially `mcp_server.py` (bash execution) and `mcp_cpp_server.py` (C++ execution). While `adk_code_assistant.py` runs them as local subprocesses managed by ADK, if you adapt this setup to expose the ADK agent or the MCP servers more broadly, ensure appropriate security measures are in place.
+
+### Testing the ADK Code Assistant
+
+Unit and basic integration tests for the ADK Code Assistant are provided in `test_adk_code_assistant.py`. These tests use Python's built-in `unittest` framework and `unittest.mock` to verify the agent creation logic and the integration of mocked tools.
+
+**Prerequisites for Testing:**
+
+*   Ensure `google-adk` is installed, as the tests import `adk_code_assistant.py` which in turn imports ADK components.
+    ```bash
+    pip install google-adk
+    ```
+*   No external services (like live MCP servers or Docker) are required to run these specific tests as they rely on mocking `MCPToolset.from_server` and the tools themselves.
+
+**Running the Tests:**
+
+To run the tests, navigate to the root directory of the repository and execute:
+
+```bash
+python3 -m unittest test_adk_code_assistant.py
+```
+Alternatively, you can run it directly if it's made executable or by:
+```bash
+python3 test_adk_code_assistant.py
+```
+
+The tests will print output indicating the status of each test case (e.g., "OK", "FAIL", "ERROR") and a summary.
