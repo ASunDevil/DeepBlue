@@ -345,3 +345,66 @@ The `test_mcp_cpp_server.py` file contains functional integration tests that dem
     #         print("Screenshot failed with no error information.")
     ```
 The `test_mcp_chrome_server.py` file contains functional integration tests that demonstrate client interaction with the `capture_webpage` tool.
+
+
+## ADK Code Assistant (`adk_code_assistant.py`)
+
+This repository also includes `adk_code_assistant.py`, which demonstrates how to build an AI agent using the [Agent Development Kit (ADK)](https://github.com/google/adk-python) that leverages all the MCP servers provided in this repository (`mcp_server.py`, `mcp_cpp_server.py`, `mcp_chrome_server.py`).
+
+### Overview
+
+The `adk_code_assistant.py` script defines an ADK `LlmAgent` configured to use the bash execution, C++ compilation/execution, and webpage screenshot capabilities as tools. This creates a "code assistant" that can understand natural language queries and utilize these tools to perform coding-related tasks.
+
+### Prerequisites
+
+Before running the ADK Code Assistant, ensure you have the following:
+
+1.  **Python 3.9+**
+2.  **Install ADK**:
+    ```bash
+    pip install google-adk
+    ```
+3.  **MCP Server Dependencies**: Each MCP server script (`mcp_server.py`, `mcp_cpp_server.py`, `mcp_chrome_server.py`) has its own dependencies (e.g., `mcp` package, Docker for C++ and Chrome tools). Ensure these are met as described in their respective sections earlier in this README. For example, you'll likely need:
+    ```bash
+    pip install "mcp[cli]" 
+    ```
+    And Docker must be installed and running if you intend for the C++ and Chrome screenshot tools to be functional.
+4.  **Environment Setup (Optional but Recommended for Gemini models)**:
+    If you are using a Gemini model with ADK (like the default 'gemini-2.0-flash' in the script), you might need to set up authentication for Google Cloud and potentially Vertex AI. Refer to the [ADK documentation](https://google.github.io/adk-docs/) for the latest guidance on authentication and model configuration. Typically, this might involve:
+    ```bash
+    gcloud auth application-default login
+    ```
+    And setting your project ID:
+    ```bash
+    # Example:
+    # export GOOGLE_CLOUD_PROJECT="your-gcp-project-id"
+    # export GOOGLE_GENAI_USE_VERTEXAI="True" 
+    # export GOOGLE_CLOUD_LOCATION="your-gcp-region" # e.g., us-central1
+    ```
+    Consult the ADK documentation for specific environment variables and setup based on your chosen model and execution environment.
+
+### Running the ADK Code Assistant
+
+1.  Navigate to the root directory of this repository.
+2.  Run the script:
+    ```bash
+    python3 adk_code_assistant.py
+    ```
+
+The script will:
+*   Attempt to initialize `MCPToolset` for each of the three MCP server scripts. This involves ADK starting these server scripts as subprocesses.
+*   Print diagnostic information about the tools loaded from each MCP server.
+*   Define the `code_assistant` agent.
+*   The `if __name__ == '__main__':` block in the script currently runs a test creation sequence that prints details of the loaded agent and its tools. It also includes commented-out conceptual code showing how you might use `adk.runners.Runner` to interact with the agent.
+
+### How it Works
+
+The `adk_code_assistant.py` script uses `MCPToolset.from_server` with `StdioServerParameters`. This means ADK launches the `mcp_server.py`, `mcp_cpp_server.py`, and `mcp_chrome_server.py` scripts as background processes and communicates with them over their standard input/output. The tools discovered from these MCP servers are then provided to the ADK `LlmAgent`.
+
+### Customization
+
+*   **Model**: You can change the LLM model used by the agent by modifying the `model` parameter in the `LlmAgent` instantiation within `adk_code_assistant.py`. Ensure the model you choose is compatible with your ADK setup and authentication.
+*   **Instructions**: The agent's behavior can be further customized by modifying the `instruction` prompt provided to the `LlmAgent`.
+*   **Tool Usage**: To actually interact with the agent (e.g., send it a query like "run ls -l"), you would typically use the `adk.runners.Runner` class as shown in the conceptual comments within `adk_code_assistant.py`, or by deploying/serving this agent using ADK's deployment options (like `adk web` or Agent Engine).
+
+**Security Note**: Remember the security warnings associated with each MCP server, especially `mcp_server.py` (bash execution) and `mcp_cpp_server.py` (C++ execution). While `adk_code_assistant.py` runs them as local subprocesses managed by ADK, if you adapt this setup to expose the ADK agent or the MCP servers more broadly, ensure appropriate security measures are in place.
