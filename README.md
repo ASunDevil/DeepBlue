@@ -153,3 +153,97 @@ Here's a conceptual Python client example:
 
 ```
 The `test_mcp_server.py` file contains a fully functional integration test that demonstrates client interaction.
+
+## C++ Code Execution MCP Server (Simple Version)
+
+### Overview
+The `mcp_cpp_server.py` script implements an MCP server that exposes an `execute_cpp` tool. Its purpose is to allow remote compilation and execution of single C++ source file snippets within a sandboxed environment. This "simple version" is designed to work with the C++ Standard Library only; it does not support linking external libraries or providing user-defined compile flags beyond those hardcoded in `cpp_runner.py`.
+
+### Core Execution Logic (`cpp_runner.py`)
+The actual C++ compilation and execution are handled by the `run_cpp_code` function within `cpp_runner.py`. This module uses `g++` (via a Docker container, e.g., `frolvlad/alpine-gxx:latest` or `gcc:latest`) to compile the C++ code and then runs the resulting executable, also within a Docker container. Docker is therefore a key dependency for providing this sandboxing layer.
+
+### Dependencies
+-   **For the MCP server (`mcp_cpp_server.py`)**:
+    -   The `mcp` Python package. Install with `pip install "mcp[cli]"`. This typically includes `uvicorn` for running the FastAPI-based server.
+-   **For the core C++ runner (`cpp_runner.py`)**:
+    -   **Docker**: Must be installed, running, and the user executing the script must have permissions to interact with the Docker daemon. The specified Docker image (e.g., `frolvlad/alpine-gxx:latest`) must be pullable.
+    -   Python standard libraries: `subprocess`, `tempfile`, `os`, `shutil`.
+
+### Running the Server
+To run the C++ MCP server, execute the following command from the project's root directory:
+```bash
+python mcp_cpp_server.py
+```
+The server will typically start on `http://127.0.0.1:8000`, and the MCP endpoint will be `/mcp` (so, `http://127.0.0.1:8000/mcp`).
+
+**Port Conflict Note:** If you have other MCP servers (like the bash tool server described earlier) that also default to port 8000, you will need to configure one of them to use a different port or ensure only one is running at a time. This can often be done by modifying the `mcp_app.run()` call (e.g., `mcp_app.run(port=8001)`) or via uvicorn command-line options if running with uvicorn directly.
+
+### **CRITICAL SECURITY WARNINGS**
+1.  **Arbitrary Code Execution Risk:** The `execute_cpp` tool allows remote execution of C++ code. This is **EXTREMELY DANGEROUS**. Malicious C++ code can cause severe damage, data loss, or system compromise.
+2.  **Sandboxing Layer (Docker):** The server uses Docker via `cpp_runner.py` to provide a layer of sandboxing for compilation and execution. This is a critical defense but relies on correct Docker configuration and up-to-date Docker versions.
+3.  **MCP Server Authentication (Essential):** As with any powerful tool, this MCP server **MUST NOT** be exposed to untrusted networks or users without robust authentication and authorization implemented at the MCP level (e.g., using OAuth 2.0, as indicated by commented-out sections in `mcp_cpp_server.py`). Relying solely on the Docker sandbox is insufficient for a networked service.
+4.  **Resource Limits:** The `cpp_runner.py` (and its underlying Docker calls) should enforce resource limits (CPU, memory, time). While default timeouts are set for compilation and execution within `cpp_runner.py`, ensure these are appropriate for your environment and consider that C++ code can be written to consume maximal resources within those timeouts.
+
+### Interacting with the `execute_cpp` Tool
+-   **Tool Name:** `execute_cpp` (as registered with the MCP server)
+-   **Arguments:**
+    -   `cpp_code` (str): The C++ source code snippet to be compiled and executed.
+    -   `stdin_text` (str, optional): A string that will be provided as standard input to the C++ program during its execution phase. Defaults to `None` if not provided.
+-   **Return Value:** The tool returns a dictionary (via `tool_result.content` from the MCP client's perspective) containing detailed information from both the compilation and execution phases. The structure is:
+    ```json
+    {
+        "compilation_stdout": "...", 
+        "compilation_stderr": "...", 
+        "compilation_exit_code": 0,
+        "timed_out_compilation": false, 
+        "execution_stdout": "...", 
+        "execution_stderr": "...",
+        "execution_exit_code": 0, 
+        "timed_out_execution": false
+    }
+    ```
+    (Actual stdout/stderr content and exit codes will vary based on the C++ code and its execution.)
+
+-   **Conceptual Client Example:**
+    ```python
+    # Conceptual client example (assumes an MCP session 'session' is active)
+    # See test_mcp_cpp_server.py for a runnable client example.
+
+    cpp_source = """
+    #include <iostream>
+    #include <string>
+    int main() {
+        std::string name;
+        std::cout << "Enter your name: "; // Prompt to stdout
+        std::cin >> name; // Reads a single word
+        std::cout << "Hello, " << name << "!" << std::endl;
+        return 0;
+    }
+    """
+    stdin_input = "Jules" # Input for std::cin
+
+    # tool_result = await session.call_tool(
+    #     "execute_cpp",
+    #     {"cpp_code": cpp_source, "stdin_text": stdin_input}
+    # )
+    
+    # if tool_result.success:
+    #     print("C++ execution successful (from MCP tool perspective)!")
+    #     print("Result dictionary from cpp_runner:")
+    #     # tool_result.content is the dictionary returned by run_cpp_code
+    #     # print(tool_result.content) 
+    #     # Expected output in tool_result.content for this example:
+    #     # {
+    #     #     "compilation_stdout": "", 
+    #     #     "compilation_stderr": "", 
+    #     #     "compilation_exit_code": 0,
+    #     #     "timed_out_compilation": False, 
+    #     #     "execution_stdout": "Enter your name: Hello, Jules!\n", 
+    #     #     "execution_stderr": "",
+    #     #     "execution_exit_code": 0, 
+    #     #     "timed_out_execution": False
+    #     # }
+    # else:
+    #     print(f"MCP tool call failed: {tool_result.error_message}")
+    ```
+The `test_mcp_cpp_server.py` file contains functional integration tests that demonstrate client interaction with the `execute_cpp` tool.
