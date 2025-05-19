@@ -85,3 +85,71 @@ To run the tests, navigate to the root directory of the project in your terminal
 python3 -m unittest test_bash_tool.py
 ```
 The tests will run and report their status (e.g., OK if all pass, or details of any failures).
+
+## MCP Server for Bash Command Execution
+
+### Overview
+The `mcp_server.py` script implements an MCP (Master Control Program) server. This server exposes the `execute_bash` tool, allowing MCP clients to remotely execute bash commands.
+
+### Dependencies
+The server requires the `mcp` Python package. You can install it and its typical dependencies (including `uvicorn` for running the server) using pip:
+```bash
+pip install "mcp[cli]"
+```
+The `mcp_server.py` script itself includes a helper to attempt this installation if `mcp` is not initially found when it starts.
+
+### Running the Server
+To run the MCP server, execute the following command in your terminal from the root directory of this project:
+```bash
+python mcp_server.py
+```
+The server will typically start on `http://127.0.0.1:8000`. You should see output in the console indicating the server is running.
+
+### **IMPORTANT SECURITY WARNING**
+The `execute_bash` tool provided by this server allows for arbitrary bash command execution. This is **extremely dangerous** if the server is exposed without proper security measures. Before deploying or using this server in any environment where it could be accessed by untrusted parties, you **MUST** implement robust authentication and authorization. The `mcp_server.py` file contains comments and placeholders indicating where MCP's built-in OAuth 2.0 features should be integrated. Failure to secure this tool can lead to severe security vulnerabilities, including unauthorized access to and compromise of the system running the server.
+
+### Interacting with the Tool
+Once the MCP server is running, clients can connect to it and call the `execute_bash` tool. The tool name as registered with the MCP server is `execute_bash`.
+
+The tool expects the following arguments:
+-   `command` (str): The bash command string to execute.
+-   `timeout` (int, optional): The maximum time in seconds to wait for the command to complete. Defaults to 60 if not provided.
+-   `working_directory` (str or None, optional): The directory in which to execute the command. If `None` or not specified, it defaults to the server's current working directory.
+
+It returns a dictionary containing:
+-   `stdout` (str): The standard output from the command.
+-   `stderr` (str): The standard error output from the command.
+-   `exit_code` (int): The exit code of the command.
+-   `timed_out` (bool): `True` if the command timed out, `False` otherwise.
+
+Here's a conceptual Python client example:
+```python
+# Conceptual client example (assumes you have an MCP session connected)
+# See test_mcp_server.py for a more complete, runnable client example.
+# Ensure 'mcp' and 'httpx' packages are installed: pip install "mcp[cli]" httpx
+
+# async with streamablehttp_client(MCP_SERVER_URL) as (read_stream, write_stream, _):
+#     async with ClientSession(read_stream, write_stream) as session:
+#         await session.initialize()
+#
+#         tool_name = "execute_bash"
+#         arguments = {
+#             "command": "echo 'Hello from MCP client!'",
+#             "timeout": 30,
+#             "working_directory": "/tmp"
+#         }
+#
+#         # Note: The 'ctx' argument is handled by the MCP framework
+#         # and does not need to be explicitly passed by the client here.
+#         tool_result = await session.call_tool(tool_name, arguments)
+#
+#         if tool_result.success:
+#             print("Tool executed successfully!")
+#             # The actual result from 'execute_bash' is in tool_result.content
+#             print(f"Result: {tool_result.content}") 
+#             # Expecting a dictionary like {'stdout': 'Hello from MCP client!\n', 'stderr': '', ...}
+#         else:
+#             print(f"Tool execution failed: {tool_result.error_message}")
+
+```
+The `test_mcp_server.py` file contains a fully functional integration test that demonstrates client interaction.
