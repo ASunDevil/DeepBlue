@@ -65,38 +65,55 @@ mcp_app = FastMCP(
 )
 
 @mcp_app.tool()
-def execute_cpp(ctx: Context, cpp_code: str, stdin_text: Union[str, None] = None) -> Dict[str, Any]:
+def execute_cpp(ctx: Context, cpp_code: str, stdin_text: Union[str, None] = None, compiler_choice: Union[str, None] = "g++") -> Dict[str, Any]:
     """
-    Compiles and executes a given snippet of C++ code in a sandboxed Docker environment.
+    Compiles and executes a given snippet of C++ code in a sandboxed Docker environment,
+    allowing selection between g++ and clang++.
 
-    The C++ code is compiled using g++ (e.g., -std=c++17) and run.
+    The C++ code is compiled using the chosen compiler (e.g., -std=c++17) and run.
     Only the C++ Standard Library is typically available, limited by the Docker image used
-    in `cpp_runner.py`.
+    in `cpp_runner.py` (ubuntu:22.04, which has g++ and clang installed by the script).
 
     Args:
         ctx: The MCP Context object, used for logging.
         cpp_code: A string containing the C++ source code to compile and run.
         stdin_text: Optional. A string to be provided as standard input to the C++ program.
+        compiler_choice: Optional. The C++ compiler to use. Supported values are "g++"
+                         (default) and "clang++". If None or an empty string is provided,
+                         it defaults to "g++".
 
     Returns:
         A dictionary containing detailed results from the compilation and execution phases,
-        including stdout, stderr, exit codes, and timeout statuses for both.
+        including stdout, stderr, exit codes, timeout statuses for both, and the
+        `compiler_used`.
         Example: {
             "compilation_stdout": "...", "compilation_stderr": "...", "compilation_exit_code": 0,
             "timed_out_compilation": False, "execution_stdout": "...", "execution_stderr": "...",
-            "execution_exit_code": 0, "timed_out_execution": False
+            "execution_exit_code": 0, "timed_out_execution": False, "compiler_used": "g++"
         }
     """
+    selected_compiler = compiler_choice if compiler_choice and compiler_choice.strip() else "g++"
+
     # Log the request, being mindful of potentially large cpp_code.
-    # Consider logging a hash or truncating if necessary in a production system.
     code_preview = cpp_code[:100] + "..." if len(cpp_code) > 100 else cpp_code
-    ctx.info(f"Attempting to execute C++ code. stdin_text provided: {stdin_text is not None}. Code preview: '{code_preview}'")
+    ctx.info(
+        f"Attempting to execute C++ code. "
+        f"Compiler: {selected_compiler}, "
+        f"stdin_text provided: {stdin_text is not None}. "
+        f"Code preview: '{code_preview}'"
+    )
 
     # Call the cpp_runner function. Default timeouts from cpp_runner are used unless overridden.
-    result = run_cpp_code(cpp_code=cpp_code, stdin_data=stdin_text)
+    result = run_cpp_code(
+        cpp_code=cpp_code,
+        stdin_data=stdin_text,
+        compiler=selected_compiler
+    )
 
+    # The 'compiler_used' field is already in the result from run_cpp_code
     ctx.info(
         f"C++ execution task completed. "
+        f"Compiler used: {result.get('compiler_used')}, "
         f"Compilation exit: {result.get('compilation_exit_code')}, "
         f"Execution exit: {result.get('execution_exit_code')}, "
         f"Compilation timeout: {result.get('timed_out_compilation')}, "

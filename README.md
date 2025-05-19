@@ -189,6 +189,7 @@ The server will typically start on `http://127.0.0.1:8000`, and the MCP endpoint
 -   **Arguments:**
     -   `cpp_code` (str): The C++ source code snippet to be compiled and executed.
     -   `stdin_text` (str, optional): A string that will be provided as standard input to the C++ program during its execution phase. Defaults to `None` if not provided.
+    -   `compiler_choice` (str, optional): Specifies the C++ compiler to use. Supported values are `"g++"` and `"clang++"`. Defaults to `"g++"` if not provided or if an empty/null string is passed.
 -   **Return Value:** The tool returns a dictionary (via `tool_result.content` from the MCP client's perspective) containing detailed information from both the compilation and execution phases. The structure is:
     ```json
     {
@@ -199,10 +200,12 @@ The server will typically start on `http://127.0.0.1:8000`, and the MCP endpoint
         "execution_stdout": "...", 
         "execution_stderr": "...",
         "execution_exit_code": 0, 
-        "timed_out_execution": false
+        "timed_out_execution": false,
+        "compiler_used": "g++" 
     }
     ```
-    (Actual stdout/stderr content and exit codes will vary based on the C++ code and its execution.)
+    (Actual stdout/stderr content, exit codes, and `compiler_used` will vary based on the C++ code, its execution, and the chosen compiler.)
+    The dictionary also includes a `compiler_used` field (e.g., `"g++"` or `"clang++"`) indicating the compiler that was actually invoked for the compilation.
 
 -   **Conceptual Client Example:**
     ```python
@@ -222,17 +225,40 @@ The server will typically start on `http://127.0.0.1:8000`, and the MCP endpoint
     """
     stdin_input = "Jules" # Input for std::cin
 
-    # tool_result = await session.call_tool(
+    # Example with default compiler (g++)
+    # tool_result_gpp = await session.call_tool(
     #     "execute_cpp",
-    #     {"cpp_code": cpp_source, "stdin_text": stdin_input}
+    #     {
+    #         "cpp_code": cpp_source, 
+    #         "stdin_text": stdin_input,
+    #         # "compiler_choice": "g++" // or leave out for default
+    #     }
     # )
+    # if tool_result_gpp.success:
+    #     print(f"Result with g++ (default): {tool_result_gpp.content}")
+    #     # Expected output in tool_result_gpp.content would include:
+    #     # ... "compiler_used": "g++" ...
+
+    # Example with clang++
+    # tool_result_clangpp = await session.call_tool(
+    #     "execute_cpp",
+    #     {
+    #         "cpp_code": cpp_source, 
+    #         "stdin_text": stdin_input,
+    #         "compiler_choice": "clang++"
+    #     }
+    # )
+    # if tool_result_clangpp.success:
+    #     print(f"Result with clang++: {tool_result_clangpp.content}")
+    #     # Expected output in tool_result_clangpp.content would include:
+    #     # ... "compiler_used": "clang++" ...
     
-    # if tool_result.success:
+    # if tool_result.success: # Generic handling, adapt as needed
     #     print("C++ execution successful (from MCP tool perspective)!")
     #     print("Result dictionary from cpp_runner:")
     #     # tool_result.content is the dictionary returned by run_cpp_code
     #     # print(tool_result.content) 
-    #     # Expected output in tool_result.content for this example:
+    #     # Expected output in tool_result.content for the g++ example:
     #     # {
     #     #     "compilation_stdout": "", 
     #     #     "compilation_stderr": "", 
@@ -241,7 +267,8 @@ The server will typically start on `http://127.0.0.1:8000`, and the MCP endpoint
     #     #     "execution_stdout": "Enter your name: Hello, Jules!\n", 
     #     #     "execution_stderr": "",
     #     #     "execution_exit_code": 0, 
-    #     #     "timed_out_execution": False
+    #     #     "timed_out_execution": False,
+    #     #     "compiler_used": "g++"
     #     # }
     # else:
     #     print(f"MCP tool call failed: {tool_result.error_message}")
