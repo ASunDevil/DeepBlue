@@ -23,7 +23,8 @@ async def create_code_assistant_agent():
     local_mcp_servers = [
         ("mcp_server.py", "bash execution"),
         ("mcp_cpp_server.py", "C++ execution"),
-        ("mcp_chrome_server.py", "webpage capture")
+        ("mcp_chrome_server.py", "webpage capture"),
+        ("mcp_langflow_critique_server.py", "Langflow code critique") # Added Langflow server
     ]
 
     try:
@@ -86,9 +87,10 @@ async def create_code_assistant_agent():
         instruction=(
             'You are a helpful AI code assistant. '
             'You have tools to execute bash commands, compile and run C++ code snippets, '
-            'capture screenshots of webpages, and interact with GitHub (e.g., read files, list issues). ' # Updated instruction
+            'capture screenshots of webpages, interact with GitHub (e.g., read files, list issues), '
+            'and critique code (providing feedback on quality, style, and potential issues). ' # Updated instruction
             'Use these tools as needed to answer user requests, debug code, '
-            'fetch documentation, manage repositories, or perform other coding-related tasks.'
+            'fetch documentation, manage repositories, critique code, or perform other coding-related tasks.'
         ),
         tools=all_mcp_tools,
     )
@@ -123,10 +125,11 @@ if __name__ == '__main__':
             print("\nTroubleshooting tips:")
             print("1. Verify 'google-adk' is installed.")
             print("2. Ensure 'python3' and 'docker' are in your system PATH.")
-            print("3. Confirm local MCP server scripts (mcp_server.py, etc.) are in the current directory.")
-            print("4. For GitHub tools, ensure GITHUB_TOKEN environment variable is set and Docker can pull 'ghcr.io/github/github-mcp-server'.") # Updated tip
+            print("3. Confirm local MCP server scripts (mcp_server.py, mcp_cpp_server.py, mcp_chrome_server.py, mcp_langflow_critique_server.py, etc.) are in the current directory.") # Updated tip
+            print("4. For GitHub tools, ensure GITHUB_TOKEN environment variable is set and Docker can pull 'ghcr.io/github/github-mcp-server'.")
             print("5. Check for errors from MCP server scripts or Docker if tools fail to load.")
             print("6. If using Docker-dependent tools (C++, Chrome, GitHub), ensure Docker is running and accessible.")
+            print("7. For Langflow code critique, ensure the LANGFLOW_CRITIQUE_API_URL environment variable is correctly set if not using the default, and that the Langflow service is running and accessible.") # Added tip
         finally:
             if exit_stack:
                 print("\nClosing AsyncExitStack for MCP server connections...")
