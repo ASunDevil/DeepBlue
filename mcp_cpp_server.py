@@ -20,6 +20,8 @@
 # maximum security scrutiny.
 
 from typing import Union, Dict, Any # For type hinting
+from datetime import datetime
+import traceback
 
 # Attempt to import FastMCP and Context, and install if missing
 try:
@@ -66,6 +68,7 @@ mcp_app = FastMCP(
 
 @mcp_app.tool()
 def execute_cpp(ctx: Context, cpp_code: str, stdin_text: Union[str, None] = None, compiler_choice: Union[str, None] = "g++") -> Dict[str, Any]:
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Entering execute_cpp tool with cpp_code (first 100 chars)='{cpp_code[:100]}...', stdin_text='{stdin_text}', compiler_choice='{compiler_choice}'")
     """
     Compiles and executes a given snippet of C++ code in a sandboxed Docker environment,
     allowing selection between g++ and clang++.
@@ -93,6 +96,7 @@ def execute_cpp(ctx: Context, cpp_code: str, stdin_text: Union[str, None] = None
         }
     """
     selected_compiler = compiler_choice if compiler_choice and compiler_choice.strip() else "g++"
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Selected compiler: {selected_compiler}")
 
     # Log the request, being mindful of potentially large cpp_code.
     code_preview = cpp_code[:100] + "..." if len(cpp_code) > 100 else cpp_code
@@ -104,11 +108,13 @@ def execute_cpp(ctx: Context, cpp_code: str, stdin_text: Union[str, None] = None
     )
 
     # Call the cpp_runner function. Default timeouts from cpp_runner are used unless overridden.
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Calling run_cpp_code with compiler={selected_compiler}...")
     result = run_cpp_code(
         cpp_code=cpp_code,
         stdin_data=stdin_text,
         compiler=selected_compiler
     )
+    print(f"DEBUG: [%{datetime.now().isoformat()}] run_cpp_code returned: {result}")
 
     # The 'compiler_used' field is already in the result from run_cpp_code
     ctx.info(
@@ -119,17 +125,19 @@ def execute_cpp(ctx: Context, cpp_code: str, stdin_text: Union[str, None] = None
         f"Compilation timeout: {result.get('timed_out_compilation')}, "
         f"Execution timeout: {result.get('timed_out_execution')}"
     )
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting execute_cpp tool with result: {result}")
     return result
 
 # Main block to run the server
 if __name__ == "__main__":
-    print("Starting CppExecutionServer MCP server...")
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Starting CppExecutionServer MCP server...")
     print("!!! WARNING: This server is EXTREMELY DANGEROUS if not properly secured. For development/testing ONLY. !!!")
     # The mcp_app.run() method typically starts a Uvicorn server for development.
     # Ensure 'uvicorn' and 'fastapi' are installed as dependencies of 'mcp[cli]'.
     try:
         mcp_app.run() # Default host="127.0.0.1", port=8000
     except ImportError as e:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] ImportError during server run: {e}")
         if "uvicorn" in str(e).lower():
             print(f"Error running server: {e}")
             print("Make sure 'uvicorn' is installed. It should be a dependency of 'mcp[cli]'.")
@@ -137,6 +145,8 @@ if __name__ == "__main__":
         else:
             print(f"An import error occurred: {e}. Ensure 'mcp[cli]' and its dependencies are installed.")
     except Exception as e:
+        formatted_traceback = traceback.format_exc()
+        print(f"DEBUG: [%{datetime.now().isoformat()}] An unexpected exception occurred during server run: {e}\nTraceback:\n{formatted_traceback}")
         print(f"An unexpected error occurred while trying to run the server: {e}")
 
 ```

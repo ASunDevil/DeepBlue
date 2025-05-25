@@ -2,6 +2,8 @@ import asyncio
 import json
 from typing import List, Optional, Dict, Any
 from dotenv import load_dotenv
+from datetime import datetime
+import traceback
 
 # MCP Server Imports
 from mcp import types as mcp_types
@@ -109,18 +111,21 @@ async def execute_python_code_tool(
     """
     MCP Tool wrapper for python_runner.run_python_code.
     """
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Entering execute_python_code_tool with code (first 100 chars)='{code[:100]}...', requirements={requirements}, timeout={timeout}, python_image='{python_image}', cpu_limit='{cpu_limit}', memory_limit='{memory_limit}'")
     mcp_logger.info(
         f"Executing Python code. Timeout: {timeout}, Requirements: {requirements}, "
         f"Image: {python_image}, CPU: {cpu_limit}, Mem: {memory_limit}"
     )
     if requirements is None: # Handle default from schema if not passed
         requirements = []
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Requirements after default handling: {requirements}")
         
     try:
         # run_python_code is synchronous, but FastMCP tool functions can be async.
         # To avoid blocking the asyncio event loop if run_python_code is lengthy (due to Docker ops),
         # it's better to run it in a thread pool executor.
         loop = asyncio.get_running_loop()
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Calling run_python_code in executor with code (first 100 chars)='{code[:100]}...', requirements={requirements}, timeout={timeout}, python_image='{python_image}', cpu_limit='{cpu_limit}', memory_limit='{memory_limit}'")
         result = await loop.run_in_executor(
             None,  # Uses the default ThreadPoolExecutor
             run_python_code, 
@@ -131,6 +136,7 @@ async def execute_python_code_tool(
             cpu_limit,
             memory_limit
         )
+        print(f"DEBUG: [%{datetime.now().isoformat()}] run_python_code (in executor) returned: {result}")
         # Ensure all expected keys are present, even if None
         result.setdefault('stdout', '')
         result.setdefault('stderr', '')
@@ -139,6 +145,8 @@ async def execute_python_code_tool(
         result.setdefault('error', None)
         
     except Exception as e:
+        formatted_traceback = traceback.format_exc()
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Exception calling run_python_code via executor: {e}\nTraceback:\n{formatted_traceback}")
         mcp_logger.error(f"Exception calling run_python_code: {e}", exc_info=True)
         return {
             "stdout": "",
@@ -149,10 +157,12 @@ async def execute_python_code_tool(
         }
         
     mcp_logger.info(f"Python code execution result: {{'exit_code': result.get('exit_code'), 'timed_out': result.get('timed_out'), 'error': result.get('error')}}")
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting execute_python_code_tool with result: {result}")
     return result
 
 # --- MCP Server Runner ---
 if __name__ == "__main__":
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Starting PythonCodeExecutionServer MCP server...")
     mcp_logger.info("Starting Python Code Execution MCP Server...")
     # FastMCP's run method is synchronous but internally manages an asyncio loop for SSE if chosen.
     # For simple stdio, it's straightforward.
@@ -164,12 +174,15 @@ if __name__ == "__main__":
     # If mcp package version is >= 0.6.0, use app.run_simple_stdio() or app.run_sse_stdio()
     # Checking for a specific method to be safe with version changes:
     if hasattr(app, "run_simple_stdio"):
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Running with FastMCP run_simple_stdio (mcp >= 0.6.0)")
         mcp_logger.info("Running with FastMCP run_simple_stdio (mcp >= 0.6.0)")
         app.run_simple_stdio()
     elif hasattr(app, "run_stdio"): # Older mcp versions
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Running with FastMCP run_stdio (mcp < 0.6.0)")
         mcp_logger.info("Running with FastMCP run_stdio (mcp < 0.6.0)")
         app.run_stdio()
     else:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Could not find a suitable stdio runner method in FastMCP.")
         mcp_logger.error("Could not find a suitable stdio runner method in FastMCP. Please check your 'mcp' package version.")
         # Fallback or raise error
         # For testing, can try to run SSE on a port if stdio methods are missing
@@ -178,4 +191,5 @@ if __name__ == "__main__":
         # except Exception as e:
         #     mcp_logger.error(f"Failed to start server with SSE: {e}")
         
+    print(f"DEBUG: [%{datetime.now().isoformat()}] PythonCodeExecutionServer MCP server stopped.")
     mcp_logger.info("Python Code Execution MCP Server stopped.")

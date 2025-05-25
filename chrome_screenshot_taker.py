@@ -3,6 +3,8 @@ import json
 import base64
 import os
 import tempfile
+from datetime import datetime
+import traceback
 
 # Assuming playwright_helper.py is in the same directory as this script.
 # When running in Docker, the script's path needs to be volume-mounted.
@@ -12,6 +14,7 @@ PLAYWRIGHT_HELPER_SCRIPT_NAME = "playwright_helper.py"
 DOCKER_IMAGE = "mcr.microsoft.com/playwright/python:v1.42.0" # Example version
 
 def take_screenshot(url: str, width: int = 1280, height: int = 720, page_load_timeout_sec: int = 30) -> dict:
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Entering take_screenshot with url='{url}', width={width}, height={height}, page_load_timeout_sec={page_load_timeout_sec}")
     results = {
         "image_data": None,
         "image_format": None,
@@ -24,10 +27,12 @@ def take_screenshot(url: str, width: int = 1280, height: int = 720, page_load_ti
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     helper_script_path_host = os.path.join(script_dir, PLAYWRIGHT_HELPER_SCRIPT_NAME)
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Helper script host path: {helper_script_path_host}")
 
     if not os.path.exists(helper_script_path_host):
         results["error"] = f"Critical error: {PLAYWRIGHT_HELPER_SCRIPT_NAME} not found at {helper_script_path_host}"
         results["docker_error"] = results["error"] # Also a form of docker/setup error
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting take_screenshot (helper script not found) with results: {results}")
         return results
 
     # Path of the helper script INSIDE the Docker container
@@ -54,9 +59,10 @@ def take_screenshot(url: str, width: int = 1280, height: int = 720, page_load_ti
         str(height),
         str(playwright_timeout_ms) # Pass timeout in milliseconds
     ]
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Constructed Docker command: {' '.join(docker_command)}")
 
     try:
-        # print(f"Executing Docker command: {' '.join(docker_command)}") # For debugging
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Attempting to run Docker command. Timeout: {docker_execution_timeout_sec}s")
         process = subprocess.run(
             docker_command,
             capture_output=True,
@@ -64,6 +70,9 @@ def take_screenshot(url: str, width: int = 1280, height: int = 720, page_load_ti
             timeout=docker_execution_timeout_sec,
             check=False # Don't raise exception for non-zero exit codes from Docker itself
         )
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Docker process completed. Return code: {process.returncode}")
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Docker process stdout (first 500 chars): {process.stdout[:500]}")
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Docker process stderr (first 500 chars): {process.stderr[:500]}")
 
         if process.returncode != 0:
             results["docker_error"] = f"Docker process exited with code {process.returncode}. Stderr: {process.stderr.strip()}"
@@ -78,6 +87,7 @@ def take_screenshot(url: str, width: int = 1280, height: int = 720, page_load_ti
                 except json.JSONDecodeError:
                     # results["error"] remains the Docker execution error
                     pass 
+            print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting take_screenshot (Docker process error) with results: {results}")
             return results
 
         # Try to parse the JSON output from playwright_helper.py (printed to its stdout)
@@ -94,25 +104,33 @@ def take_screenshot(url: str, width: int = 1280, height: int = 720, page_load_ti
                 results["page_title"] = helper_output.get("page_title")
 
         except json.JSONDecodeError as e:
+            formatted_traceback = traceback.format_exc()
+            print(f"DEBUG: [%{datetime.now().isoformat()}] JSONDecodeError: {e}\nRaw output for parsing: {process.stdout.strip()}\nTraceback:\n{formatted_traceback}")
             results["error"] = f"Failed to parse JSON output from screenshot script: {e}. Raw output: {process.stdout.strip()}"
             results["docker_error"] = results["error"] # Also flag as a docker_error as script output was bad
 
     except subprocess.TimeoutExpired:
         results["error"] = f"Screenshot operation timed out after {docker_execution_timeout_sec} seconds (Docker execution)."
         results["docker_error"] = results["error"]
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Docker command timed out. Error: {results['error']}")
     except FileNotFoundError: # Docker command not found
         results["error"] = "Docker command not found. Please ensure Docker is installed and in PATH."
         results["docker_error"] = results["error"]
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Docker command not found. Error: {results['error']}")
     except Exception as e:
-        results["error"] = f"An unexpected error occurred: {type(e).__name__} - {str(e)}"
+        formatted_traceback = traceback.format_exc()
+        print(f"DEBUG: [%{datetime.now().isoformat()}] An unexpected exception occurred: {e}\nTraceback:\n{formatted_traceback}")
+        results["error"] = f"{type(e).__name__} - {str(e)}"
         results["docker_error"] = results["error"] # Flag as a docker_error
 
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting take_screenshot with results: {results}")
     return results
 
 if __name__ == '__main__':
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Starting chrome_screenshot_taker.py example usage...")
     # Example Usage (requires Docker running and playwright_helper.py in the same directory)
     test_url = "https://www.google.com" # Replace with a simple, reliable URL for testing
-    print(f"Attempting to take screenshot of {test_url}...")
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Example: Attempting to take screenshot of {test_url}...")
     output = take_screenshot(test_url, width=800, height=600, page_load_timeout_sec=20)
 
     if output.get("image_data"):
@@ -129,7 +147,8 @@ if __name__ == '__main__':
             # For CI/testing, one might want to automatically open or verify the image.
             # For this example, just printing the path is sufficient.
         except Exception as e:
-            print(f"Error saving screenshot: {e}")
+            formatted_traceback = traceback.format_exc()
+            print(f"DEBUG: [%{datetime.now().isoformat()}] Error saving screenshot: {e}\nTraceback:\n{formatted_traceback}")
         # No automatic deletion here for the example, so user can inspect.
         # In a real app, manage temp files appropriately.
     else:
@@ -140,7 +159,7 @@ if __name__ == '__main__':
              print(f"Docker specific error: {output.get('docker_error')}")
 
     test_url_timeout = "https://httpstat.us/200?sleep=30000" # sleeps for 30s
-    print(f"\nAttempting to take screenshot of {test_url_timeout} with 10s page load timeout (expecting timeout)...")
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Example: Attempting to take screenshot of {test_url_timeout}...")
     output_timeout = take_screenshot(test_url_timeout, width=800, height=600, page_load_timeout_sec=10)
     if output_timeout.get("error"):
         print(f"Error as expected: {output_timeout.get('error')}")
@@ -154,7 +173,7 @@ if __name__ == '__main__':
 
 
     test_url_invalid = "http://thissitedoesnotexistandneverwill12345.com"
-    print(f"\nAttempting to take screenshot of {test_url_invalid} (expecting error)...")
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Example: Attempting to take screenshot of {test_url_invalid}...")
     output_invalid = take_screenshot(test_url_invalid, width=800, height=600, page_load_timeout_sec=10)
     if output_invalid.get("error"):
         print(f"Error as expected: {output_invalid.get('error')}")
@@ -163,7 +182,7 @@ if __name__ == '__main__':
 
     # Example of a site that might cause issues or have specific error messages
     test_url_bad_ssl = "https://expired.badssl.com/"
-    print(f"\nAttempting to take screenshot of {test_url_bad_ssl} (expecting error or specific handling)...")
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Example: Attempting to take screenshot of {test_url_bad_ssl}...")
     # playwright_helper.py has ignore_https_errors=True, so this might succeed or show a browser error page
     output_bad_ssl = take_screenshot(test_url_bad_ssl, width=800, height=600, page_load_timeout_sec=15)
     if output_bad_ssl.get("image_data"):
@@ -172,5 +191,5 @@ if __name__ == '__main__':
         print(f"Error for {test_url_bad_ssl}: {output_bad_ssl.get('error')}")
     else:
         print(f"Unexpected result for {test_url_bad_ssl}: {output_bad_ssl}")
-
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Finished chrome_screenshot_taker.py example usage.")
 ```

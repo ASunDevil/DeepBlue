@@ -18,6 +18,8 @@ import json
 import os
 import sys
 import requests
+from datetime import datetime
+import traceback
 
 # Define the tool specification.
 TOOL_SPEC = {
@@ -38,9 +40,11 @@ def run_tool(code_to_critique: str) -> str:
     """
     Invokes the Langflow code critique agent.
     """
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Entering run_tool with code_to_critique (first 100 chars)='{code_to_critique[:100]}...'", file=sys.stderr)
     langflow_api_url = os.environ.get("LANGFLOW_CRITIQUE_API_URL", DEFAULT_LANGFLOW_API_URL)
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Langflow API URL: {langflow_api_url}", file=sys.stderr)
 
-    print(f"Attempting to critique code using Langflow API: {langflow_api_url}", file=sys.stderr)
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Attempting to critique code using Langflow API: {langflow_api_url}", file=sys.stderr)
 
     payload = {"code": code_to_critique}
     headers = {"Content-Type": "application/json"}
@@ -49,9 +53,15 @@ def run_tool(code_to_critique: str) -> str:
         response = requests.post(langflow_api_url, json=payload, headers=headers, timeout=60) # Added timeout
         response.raise_for_status()  # Raises an HTTPError for bad responses (4XX or 5XX)
     except requests.exceptions.Timeout as e:
+        formatted_traceback = traceback.format_exc()
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Langflow API call timed out: {e}\nTraceback:\n{formatted_traceback}", file=sys.stderr)
         print(f"Error calling Langflow API: Timeout - {e}", file=sys.stderr)
-        return json.dumps({"error": f"Langflow API request timed out: {e}"})
+        value_to_return = json.dumps({"error": f"Langflow API request timed out: {e}"})
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_tool, returning to stdout: {value_to_return[:500]}...", file=sys.stderr)
+        return value_to_return
     except requests.exceptions.RequestException as e:
+        formatted_traceback = traceback.format_exc()
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Langflow API RequestException: {e}\nResponse content (if any): {e.response.text if e.response else 'No response content'}\nTraceback:\n{formatted_traceback}", file=sys.stderr)
         print(f"Error calling Langflow API: {e}", file=sys.stderr)
         # Attempt to get more details from response if available
         error_detail = ""
@@ -60,14 +70,20 @@ def run_tool(code_to_critique: str) -> str:
                 error_detail = e.response.json()
             except json.JSONDecodeError:
                 error_detail = e.response.text
-        return json.dumps({"error": f"Failed to connect to Langflow API: {e}. Detail: {error_detail}"})
+        value_to_return = json.dumps({"error": f"Failed to connect to Langflow API: {e}. Detail: {error_detail}"})
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_tool, returning to stdout: {value_to_return[:500]}...", file=sys.stderr)
+        return value_to_return
 
     try:
         response_json = response.json()
     except json.JSONDecodeError as e:
+        formatted_traceback = traceback.format_exc()
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Failed to decode JSON response from Langflow: {e}\nResponse text: {response.text}\nTraceback:\n{formatted_traceback}", file=sys.stderr)
         print(f"Error decoding JSON response from Langflow API: {e}", file=sys.stderr)
         print(f"Response text: {response.text}", file=sys.stderr)
-        return json.dumps({"error": f"Invalid JSON response from Langflow API: {e}"})
+        value_to_return = json.dumps({"error": f"Invalid JSON response from Langflow API: {e}"})
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_tool, returning to stdout: {value_to_return[:500]}...", file=sys.stderr)
+        return value_to_return
 
     # Based on "Simplified/Ideal Response Format" from design: {"critique": "..."}
     # Langflow's actual API might wrap this, e.g. in an 'outputs' list as shown in the design doc.
@@ -78,7 +94,8 @@ def run_tool(code_to_critique: str) -> str:
 
     if "critique" in response_json:
         critique = response_json["critique"]
-        print("Received critique.", file=sys.stderr)
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Received critique directly.", file=sys.stderr)
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_tool, returning to stdout: {critique[:500]}...", file=sys.stderr)
         return critique # Per MCP, we return the direct result string if successful
     elif "outputs" in response_json and isinstance(response_json["outputs"], list) and len(response_json["outputs"]) > 0:
         # Handling the more complex Langflow output structure if "Simplified/Ideal" is not met
@@ -97,7 +114,8 @@ def run_tool(code_to_critique: str) -> str:
                 for component_output in outputs_dict.values():
                     if isinstance(component_output, dict) and "text" in component_output:
                         critique = component_output["text"]
-                        print("Received critique from nested Langflow structure.", file=sys.stderr)
+                        print(f"DEBUG: [%{datetime.now().isoformat()}] Received critique from nested Langflow structure (outputs.COMPONENT.text).", file=sys.stderr)
+                        print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_tool, returning to stdout: {critique[:500]}...", file=sys.stderr)
                         return critique
             elif "results" in first_output_element and isinstance(first_output_element["results"], dict):
                  # Langflow's /api/v1/run/{flow_id}/ KEEPS CHANGING.
@@ -108,11 +126,13 @@ def run_tool(code_to_critique: str) -> str:
                     if isinstance(component_result, dict):
                         if "message" in component_result and isinstance(component_result["message"], dict) and "text" in component_result["message"]:
                             critique = component_result["message"]["text"]
-                            print("Received critique from Langflow 'results.COMPONENT.message.text' structure.", file=sys.stderr)
+                            print(f"DEBUG: [%{datetime.now().isoformat()}] Received critique from Langflow 'results.COMPONENT.message.text' structure.", file=sys.stderr)
+                            print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_tool, returning to stdout: {critique[:500]}...", file=sys.stderr)
                             return critique
                         elif "text" in component_result: # Direct text output from a component in results
                             critique = component_result["text"]
-                            print("Received critique from Langflow 'results.COMPONENT.text' structure.", file=sys.stderr)
+                            print(f"DEBUG: [%{datetime.now().isoformat()}] Received critique from Langflow 'results.COMPONENT.text' structure.", file=sys.stderr)
+                            print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_tool, returning to stdout: {critique[:500]}...", file=sys.stderr)
                             return critique
 
 
@@ -120,75 +140,96 @@ def run_tool(code_to_critique: str) -> str:
             # This is a common pattern for Langflow outputs that are just text.
             if "message" in first_output_element and isinstance(first_output_element["message"], dict) and "text" in first_output_element["message"]:
                  critique = first_output_element["message"]["text"]
-                 print("Received critique from Langflow 'outputs[0].message.text' structure.", file=sys.stderr)
+                 print(f"DEBUG: [%{datetime.now().isoformat()}] Received critique from Langflow 'outputs[0].message.text' structure.", file=sys.stderr)
+                 print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_tool, returning to stdout: {critique[:500]}...", file=sys.stderr)
                  return critique
 
 
         except (KeyError, TypeError, IndexError) as e:
-            print(f"Error parsing known nested Langflow API response structure: {e}", file=sys.stderr)
-            print(f"Full response: {response_json}", file=sys.stderr)
-            return json.dumps({"error": f"Could not find 'critique' or known nested text field in Langflow API response. Full response: {response_json}"})
+            print(f"DEBUG: [%{datetime.now().isoformat()}] Error parsing known nested Langflow API response structure: {e}", file=sys.stderr)
+            print(f"Full response: {response_json}", file=sys.stderr) # This existing print is fine
+            value_to_return = json.dumps({"error": f"Could not find 'critique' or known nested text field in Langflow API response. Full response: {response_json}"})
+            print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_tool, returning to stdout: {value_to_return[:500]}...", file=sys.stderr)
+            return value_to_return
 
-    print(f"Error: 'critique' field (or known nested structure) not found in Langflow API response.", file=sys.stderr)
-    print(f"Full response: {response_json}", file=sys.stderr)
-    return json.dumps({"error": f"'critique' field (or known nested structure) not found in Langflow API response. Full response: {response_json}"})
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Error: 'critique' field (or known nested structure) not found in Langflow API response.", file=sys.stderr)
+    print(f"Full response: {response_json}", file=sys.stderr) # This existing print is fine
+    value_to_return = json.dumps({"error": f"'critique' field (or known nested structure) not found in Langflow API response. Full response: {response_json}"})
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_tool, returning to stdout: {value_to_return[:500]}...", file=sys.stderr)
+    return value_to_return
 
 
 def main():
+    print(f"DEBUG: [%{datetime.now().isoformat()}] mcp_langflow_critique_server.py main() called with raw args: {sys.argv}", file=sys.stderr)
     parser = argparse.ArgumentParser(description="MCP server for Langflow Code Critique.")
     parser.add_argument("--tool_spec", action="store_true", help="Print tool spec and exit.")
 
     args, remaining_args = parser.parse_known_args()
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Parsed initial args: {args}, remaining_args: {remaining_args}", file=sys.stderr)
 
     if args.tool_spec:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Printing tool spec and exiting.", file=sys.stderr)
         print(json.dumps({"tools": [TOOL_SPEC]}))
         sys.exit(0)
 
     # Expect one argument: the JSON string for the tool invocation.
     if len(remaining_args) != 1:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Error: Expected one argument (JSON string for tool invocation). Exiting.", file=sys.stderr)
         print("Error: Expected one argument (JSON string for tool invocation).", file=sys.stderr)
         sys.exit(1)
 
     try:
         tool_invocation = json.loads(remaining_args[0])
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Parsed tool_invocation JSON: {tool_invocation}", file=sys.stderr)
     except json.JSONDecodeError as e:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Error: Invalid JSON argument: {e}. Exiting.", file=sys.stderr)
         print(f"Error: Invalid JSON argument: {e}", file=sys.stderr)
         sys.exit(1)
 
     if not isinstance(tool_invocation, dict) or "tool_name" not in tool_invocation or "arguments" not in tool_invocation:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Error: JSON argument must be an object with 'tool_name' and 'arguments'. Exiting.", file=sys.stderr)
         print("Error: JSON argument must be an object with 'tool_name' and 'arguments'.", file=sys.stderr)
         sys.exit(1)
 
     if tool_invocation["tool_name"] != TOOL_SPEC["name"]:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Error: Unknown tool_name '{tool_invocation['tool_name']}'. Expected '{TOOL_SPEC['name']}'. Exiting.", file=sys.stderr)
         print(f"Error: Unknown tool_name '{tool_invocation['tool_name']}'. Expected '{TOOL_SPEC['name']}'.", file=sys.stderr)
         sys.exit(1)
 
     tool_args = tool_invocation["arguments"]
     if not isinstance(tool_args, dict) or "code_to_critique" not in tool_args:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Error: Missing 'code_to_critique' in tool arguments. Exiting.", file=sys.stderr)
         print("Error: Missing 'code_to_critique' in tool arguments.", file=sys.stderr)
         sys.exit(1)
 
     code = tool_args["code_to_critique"]
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Extracted code_to_critique (first 100 chars): {code[:100]}...", file=sys.stderr)
     if not isinstance(code, str):
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Error: 'code_to_critique' argument must be a string. Exiting.", file=sys.stderr)
         print("Error: 'code_to_critique' argument must be a string.", file=sys.stderr)
         sys.exit(1)
 
     result = run_tool(code)
+    print(f"DEBUG: [%{datetime.now().isoformat()}] run_tool returned result (first 500 chars): {result[:500]}...", file=sys.stderr)
 
     # If run_tool returned an error JSON string, print it as is (it's already formatted for MCP error)
     # Otherwise, wrap successful result in the MCP JSON structure.
+    output_for_stdout = ""
     try:
         # Check if result is an error JSON from run_tool
         error_check = json.loads(result)
         if isinstance(error_check, dict) and "error" in error_check:
-            print(result) # It's an error object, print directly
+            output_for_stdout = result # It's an error object, print directly
         else:
             # This case should ideally not be reached if errors are formatted correctly,
             # but as a safeguard:
-            print(json.dumps({"result": result}))
+            output_for_stdout = json.dumps({"result": result})
     except json.JSONDecodeError:
         # This means 'result' is a simple string (successful critique)
-        print(json.dumps({"result": result}))
+        output_for_stdout = json.dumps({"result": result})
+    
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Final output to stdout (first 500 chars): {output_for_stdout[:500]}...", file=sys.stderr)
+    print(output_for_stdout)
 
 if __name__ == "__main__":
     main()
