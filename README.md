@@ -349,11 +349,17 @@ The `test_mcp_chrome_server.py` file contains functional integration tests that 
 
 ## ADK Code Assistant (`adk_code_assistant.py`)
 
-This repository also includes `adk_code_assistant.py`, which demonstrates how to build an AI agent using the [Agent Development Kit (ADK)](https://github.com/google/adk-python) that leverages all the MCP servers provided in this repository (`mcp_server.py`, `mcp_cpp_server.py`, `mcp_chrome_server.py`).
+This repository also includes `adk_code_assistant.py`, which demonstrates how to build an AI agent using the [Agent Development Kit (ADK)](https://github.com/google/adk-python). This agent leverages all the MCP servers provided in this repository (`mcp_server.py` for bash, `mcp_cpp_server.py` for C++) and also integrates the official [GitHub MCP Server](https://github.com/github/github-mcp-server) for interacting with GitHub APIs.
 
 ### Overview
 
-The `adk_code_assistant.py` script defines an ADK `LlmAgent` configured to use the bash execution, C++ compilation/execution, and webpage screenshot capabilities as tools. This creates a "code assistant" that can understand natural language queries and utilize these tools to perform coding-related tasks.
+The `adk_code_assistant.py` script defines an ADK `LlmAgent`. This agent is configured to use a variety of tools:
+*   Bash command execution (via `mcp_server.py`).
+*   C++ code compilation and execution (via `mcp_cpp_server.py`).
+*   Webpage screenshot capture (via `mcp_chrome_server.py`).
+*   GitHub interactions (via `ghcr.io/github/github-mcp-server`), such as reading files, listing issues, and more.
+
+This creates a versatile "code assistant" that can understand natural language queries and utilize these tools to perform a wide range of coding-related tasks, including repository management and information retrieval from GitHub.
 
 ### Prerequisites
 
@@ -364,73 +370,82 @@ Before running the ADK Code Assistant, ensure you have the following:
     ```bash
     pip install google-adk
     ```
-3.  **MCP Server Dependencies**: Each MCP server script (`mcp_server.py`, `mcp_cpp_server.py`, `mcp_chrome_server.py`) has its own dependencies (e.g., `mcp` package, Docker for C++ and Chrome tools). Ensure these are met as described in their respective sections earlier in this README. For example, you'll likely need:
-    ```bash
-    pip install "mcp[cli]" 
-    ```
-    And Docker must be installed and running if you intend for the C++ and Chrome screenshot tools to be functional.
-4.  **Environment Setup (Optional but Recommended for Gemini models)**:
-    If you are using a Gemini model with ADK (like the default 'gemini-2.0-flash' in the script), you might need to set up authentication for Google Cloud and potentially Vertex AI. Refer to the [ADK documentation](https://google.github.io/adk-docs/) for the latest guidance on authentication and model configuration. Typically, this might involve:
+3.  **Local MCP Server Dependencies**: 
+    *   Each local MCP server script (`mcp_server.py`, `mcp_cpp_server.py`, `mcp_chrome_server.py`) has its own dependencies (e.g., `mcp` package for all, Docker for C++ and Chrome tools). Ensure these are met as described in their respective sections earlier in this README.
+    *   You'll likely need: `pip install "mcp[cli]"`.
+    *   Docker must be installed and running for the C++ and Chrome screenshot tools to be functional.
+4.  **GitHub MCP Server Prerequisites**:
+    *   **Docker**: Must be installed and running, and able to pull images from `ghcr.io`.
+    *   **GitHub Personal Access Token (PAT)**: You need a GitHub PAT with appropriate permissions (e.g., `repo` for accessing repositories, `issues:read`, `user:read`). This token must be made available as an environment variable:
+        ```bash
+        export GITHUB_TOKEN="your_github_personal_access_token_here"
+        ```
+        The `adk_code_assistant.py` script will pass this token to the GitHub MCP Server process.
+5.  **Environment Setup for ADK/Gemini (Optional but Recommended)**:
+    If you are using a Gemini model with ADK (like the default 'gemini-2.0-flash' in the script), you might need to set up authentication for Google Cloud and potentially Vertex AI. Refer to the [ADK documentation](https://google.github.io/adk-docs/) for guidance. Typically, this might involve:
     ```bash
     gcloud auth application-default login
-    ```
-    And setting your project ID:
-    ```bash
-    # Example:
     # export GOOGLE_CLOUD_PROJECT="your-gcp-project-id"
     # export GOOGLE_GENAI_USE_VERTEXAI="True" 
-    # export GOOGLE_CLOUD_LOCATION="your-gcp-region" # e.g., us-central1
+    # export GOOGLE_CLOUD_LOCATION="your-gcp-region"
     ```
-    Consult the ADK documentation for specific environment variables and setup based on your chosen model and execution environment.
 
 ### Running the ADK Code Assistant
 
-1.  Navigate to the root directory of this repository.
-2.  Run the script:
+1.  Ensure all prerequisites above are met, especially setting the `GITHUB_TOKEN` environment variable if you want GitHub tools to be available.
+2.  Navigate to the root directory of this repository.
+3.  Run the script:
     ```bash
     python3 adk_code_assistant.py
     ```
 
 The script will:
-*   Attempt to initialize `MCPToolset` for each of the three MCP server scripts. This involves ADK starting these server scripts as subprocesses.
-*   Print diagnostic information about the tools loaded from each MCP server.
-*   Define the `code_assistant` agent.
-*   The `if __name__ == '__main__':` block in the script currently runs a test creation sequence that prints details of the loaded agent and its tools. It also includes commented-out conceptual code showing how you might use `adk.runners.Runner` to interact with the agent.
+*   Attempt to initialize `MCPToolset` for each of the local MCP server scripts (bash, C++, Chrome).
+*   If `GITHUB_TOKEN` is set, attempt to initialize `MCPToolset` for the `github-mcp-server` Docker container.
+*   Print diagnostic information about all tools loaded.
+*   Define the `code_assistant` agent with all available tools.
+*   The `if __name__ == '__main__':` block runs a test creation sequence, printing details of the agent and its tools. It also includes conceptual comments on using ADK's `Runner` for actual interaction.
 
 ### How it Works
 
-The `adk_code_assistant.py` script uses `MCPToolset.from_server` with `StdioServerParameters`. This means ADK launches the `mcp_server.py`, `mcp_cpp_server.py`, and `mcp_chrome_server.py` scripts as background processes and communicates with them over their standard input/output. The tools discovered from these MCP servers are then provided to the ADK `LlmAgent`.
+The `adk_code_assistant.py` script uses `MCPToolset.from_server` with `StdioServerParameters`. 
+*   For local servers (`mcp_server.py`, etc.), ADK launches these Python scripts as background processes.
+*   For the GitHub MCP Server, ADK launches a `docker run ... ghcr.io/github/github-mcp-server` command as a background process, passing the `GITHUB_TOKEN` to it.
+ADK then communicates with all these MCP server processes over their standard input/output. The tools discovered are provided to the ADK `LlmAgent`.
 
 ### Customization
 
-*   **Model**: You can change the LLM model used by the agent by modifying the `model` parameter in the `LlmAgent` instantiation within `adk_code_assistant.py`. Ensure the model you choose is compatible with your ADK setup and authentication.
-*   **Instructions**: The agent's behavior can be further customized by modifying the `instruction` prompt provided to the `LlmAgent`.
-*   **Tool Usage**: To actually interact with the agent (e.g., send it a query like "run ls -l"), you would typically use the `adk.runners.Runner` class as shown in the conceptual comments within `adk_code_assistant.py`, or by deploying/serving this agent using ADK's deployment options (like `adk web` or Agent Engine).
+*   **Model**: You can change the LLM model used by the agent by modifying the `model` parameter in `LlmAgent` within `adk_code_assistant.py`.
+*   **Instructions**: The agent's behavior can be further customized by modifying the `instruction` prompt. The current prompt includes mention of GitHub capabilities.
+*   **Tool Usage**: To interact with the agent, use ADK's `Runner` class (see conceptual comments in the script) or deploy the agent using options like `adk web` or Agent Engine.
+*   **GitHub Toolsets**: The `github-mcp-server` can be configured to load only specific sets of tools (e.g., only 'repos' and 'issues'). This can be done by modifying the `docker run` arguments in `adk_code_assistant.py` to pass the `GITHUB_TOOLSETS` environment variable to the container (e.g., adding `'-e'`, `'GITHUB_TOOLSETS=repos,issues'` to the `args` list and also to the `env` dict for `StdioServerParameters`).
 
-**Security Note**: Remember the security warnings associated with each MCP server, especially `mcp_server.py` (bash execution) and `mcp_cpp_server.py` (C++ execution). While `adk_code_assistant.py` runs them as local subprocesses managed by ADK, if you adapt this setup to expose the ADK agent or the MCP servers more broadly, ensure appropriate security measures are in place.
+**Security Note**: 
+*   Remember the security warnings for each local MCP server (bash, C++ execution). 
+*   For the GitHub MCP Server, be mindful of the permissions granted to your `GITHUB_TOKEN`. The agent will be able to perform actions on GitHub with the same permissions as the token. Use a token with the minimum necessary privileges.
+While `adk_code_assistant.py` runs these as local subprocesses, broader exposure of the ADK agent or underlying MCP servers requires careful security considerations.
 
 ### Testing the ADK Code Assistant
 
-Unit and basic integration tests for the ADK Code Assistant are provided in `test_adk_code_assistant.py`. These tests use Python's built-in `unittest` framework and `unittest.mock` to verify the agent creation logic and the integration of mocked tools.
+Unit and basic integration tests for the ADK Code Assistant are provided in `test_adk_code_assistant.py`. These tests use Python's built-in `unittest` framework and `unittest.mock` to verify the agent creation logic and the integration of mocked tools, including mocked GitHub tools.
 
 **Prerequisites for Testing:**
 
-*   Ensure `google-adk` is installed, as the tests import `adk_code_assistant.py` which in turn imports ADK components.
+*   Ensure `google-adk` is installed:
     ```bash
     pip install google-adk
     ```
-*   No external services (like live MCP servers or Docker) are required to run these specific tests as they rely on mocking `MCPToolset.from_server` and the tools themselves.
+*   No external services (like live MCP servers, Docker, or a live `GITHUB_TOKEN`) are required to run these specific tests as they rely on mocking.
 
 **Running the Tests:**
 
 To run the tests, navigate to the root directory of the repository and execute:
-
 ```bash
 python3 -m unittest test_adk_code_assistant.py
 ```
-Alternatively, you can run it directly if it's made executable or by:
+Or directly:
 ```bash
 python3 test_adk_code_assistant.py
 ```
-
-The tests will print output indicating the status of each test case (e.g., "OK", "FAIL", "ERROR") and a summary.
+The tests will print output indicating the status of each test case and a summary.
+```
