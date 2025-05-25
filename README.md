@@ -532,4 +532,99 @@ Or directly:
 python3 test_adk_code_assistant.py
 ```
 The tests will print output indicating the status of each test case and a summary.
-```
+
+
+---
+<br/>
+
+## Node.js Dynamic Site Generator
+
+This suite of tools provides components to generate a basic Node.js dynamic web application structure using Express.js and EJS templates. It includes a project scaffolder, a text-to-route generator, and an EJS view generator. Unit tests are provided for each component.
+
+### Core Components
+
+1.  **Project Structure Generator (`generate_project.js`)**
+    *   **Purpose:** Scaffolds a new Node.js project with a predefined structure.
+    *   **Usage:**
+        ```bash
+        node generate_project.js <projectName>
+        ```
+        Replace `<projectName>` with your desired project name (e.g., `my-new-app`).
+    *   **Generated Structure Example** (for `node generate_project.js my-new-app`):
+        ```
+        my-new-app/
+        ├── app.js
+        ├── package.json
+        ├── public/
+        │   ├── css/
+        │   │   └── style.css
+        │   └── js/
+        │       └── main.js
+        └── views/
+            └── index.ejs
+        ```
+    *   **Details:**
+        *   `app.js`: Contains a basic Express server setup, configured to use EJS as the view engine and serve static files from the `public` directory. Includes a default route `/` that renders `views/index.ejs`.
+        *   `package.json`: Includes `express` and `ejs` as dependencies and a basic `start` script.
+        *   `public/`: For static assets. `css/style.css` and `js/main.js` are created as placeholders.
+        *   `views/`: For EJS templates. `index.ejs` is a sample welcome page.
+
+2.  **Route Parser (`route_parser.js`)**
+    *   **Purpose:** Generates Express.js route definition code from a specific textual command.
+    *   **Function:** `parseRouteText(routeDescription)` (exported from `route_parser.js`)
+    *   **Input String Format:**
+        `CREATE <HTTP_METHOD> ROUTE FOR <PATH> THAT RENDERS EJS VIEW <VIEW_NAME> AND PASSES TITLE VARIABLE '<TITLE_VALUE>'`
+    *   **Example Input:**
+        ```
+        CREATE GET ROUTE FOR /products THAT RENDERS EJS VIEW product-list AND PASSES TITLE VARIABLE 'Product List Page'
+        ```
+    *   **Example Output (JavaScript code string):**
+        ```javascript
+        app.get('/products', (req, res) => {
+          res.render('product-list', { title: 'Product List Page' });
+        });
+        ```
+    *   **Supported Methods:** GET, POST, PUT, DELETE. Returns an error message for invalid formats or unsupported methods.
+
+3.  **EJS View Generator (`view_generator.js`)**
+    *   **Purpose:** Generates basic EJS view files.
+    *   **Function:** `generateEjsView(viewName, headingText)` (exported from `view_generator.js`)
+        *   Note: While `headingText` is a parameter, the current implementation primarily uses a passed-in `title` variable (e.g., `<%= title %>`) within the EJS template for the main heading and HTML title.
+    *   **Action:** Creates a `<viewName>.ejs` file inside a `views` directory (creates the directory if it doesn't exist).
+    *   **Example Generated Content for `generateEjsView('user-profile', ...)` (file: `views/user-profile.ejs`):**
+        ```html
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title><%= title %></title>
+            <link rel="stylesheet" href="/css/style.css">
+        </head>
+        <body>
+            <h1><%= title %></h1>
+            <p>This is the <%= title %> page.</p>
+            <script src="/js/main.js"></script>
+        </body>
+        </html>
+        ```
+
+### Running the Unit Tests
+
+Each component comes with unit tests using Node.js's built-in `assert` module. To run them, navigate to the project root and execute:
+
+*   For the project generator:
+    ```bash
+    node generate_project.test.js
+    ```
+*   For the route parser:
+    ```bash
+    node route_parser.test.js
+    ```
+*   For the view generator:
+    ```bash
+    node view_generator.test.js
+    ```
+These tests verify the core functionalities and include cleanup for any files or directories created during the test runs.
+
+---
