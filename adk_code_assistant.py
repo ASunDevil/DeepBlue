@@ -170,6 +170,9 @@ async def create_code_assistant_agent():
 
 if __name__ == '__main__':
     async def main():
+        # To run this script in interactive mode, execute it directly.
+        # Once the agent is initialized, you can type messages and receive responses.
+        # Type 'quit' or 'exit' to end the interactive session.
         print("Starting ADK Code Assistant...")
         # For the RAG tool to work, OPENAI_API_KEY must be set in the environment.
         if not os.environ.get("OPENAI_API_KEY"):
@@ -189,13 +192,69 @@ if __name__ == '__main__':
                         print(f"  - Tool: {tool.name}, Description: {tool.description}")
                 
                 print("\nAgent is ready.")
-                print("\nTo interact with this agent, you would typically use ADK's Runner")
-                print("or integrate it into a larger application (e.g., using `adk web`).")
-                print("\nExample RAG tool usage (conceptual):")
-                print("If you were to ask the agent: 'What does example.com say about internet domains?'")
-                print("The agent might use the 'get_website_content' tool with input: 'https://example.com,internet domains'")
+                # Start of interactive loop
+                print("\nEntering interactive mode. Type 'quit' or 'exit' to end.")
+                while True:
+                    try:
+                        user_input = input("You: ")
+                        if user_input.lower() in ['quit', 'exit']:
+                            print("Exiting interactive mode.")
+                            break
+                        
+                        # IMPORTANT: Interact with the agent. 
+                        # Try using `response = await agent.chat(user_input)`
+                        # or `response = await agent.process(user_input)`.
+                        # If these methods are not available or don't seem correct,
+                        # please look for a method on the `agent` object (of type LlmAgent)
+                        # that is designed for sending a user's text input and receiving a text response.
+                        # For example, it might be something like `response = await agent.process_utterance(user_input)`.
+                        # The response might be a string directly, or an object from which the response string needs to be extracted (e.g., response.text or response['output']).
+                        # Please adapt the response handling accordingly.
+                        
+                        # Example assuming response is a string:
+                        # response = await agent.chat(user_input) # Replace .chat() if needed
+                        # print(f"Agent: {response}")
 
+                        # Placeholder for the actual agent interaction call:
+                        # Ensure to use 'await' if the agent's chat/process method is asynchronous.
+                        # Based on ADK patterns, it's likely asynchronous.
+                        
+                        # --- Start of agent interaction logic to be implemented by worker ---
+                        # Try to find the correct method on the agent object.
+                        # This is a common pattern; the LlmAgent class is likely to have such a method.
+                        # The 'chat' method is a common name for such functionality.
+                        if hasattr(agent, 'chat') and callable(getattr(agent, 'chat')):
+                            response = await agent.chat(user_input) # Assuming response is directly usable
+                        elif hasattr(agent, 'process') and callable(getattr(agent, 'process')):
+                            response = await agent.process(user_input)
+                        elif hasattr(agent, 'process_utterance') and callable(getattr(agent, 'process_utterance')):
+                            response = await agent.process_utterance(user_input)
+                        else:
+                            # If no common methods are found, inform that the method needs to be identified.
+                            print("Agent: Error - Could not find a method to interact with the agent (e.g., chat, process, process_utterance). Further investigation is needed.")
+                            response = None
 
+                        if response:
+                            # Assuming response is a string or has a standard way to get text.
+                            # If it's an object, worker needs to find the attribute (e.g. response.text, response.content)
+                            if isinstance(response, str):
+                                print(f"Agent: {response}")
+                            elif hasattr(response, 'text'): # Common for response objects
+                                print(f"Agent: {response.text}")
+                            elif isinstance(response, dict) and 'output' in response: # ADK tools often return dicts
+                                print(f"Agent: {response['output']}")
+                            else:
+                                print(f"Agent: Received response object - {type(response)}. Need to determine how to extract text.")
+                        # --- End of agent interaction logic ---
+
+                    except KeyboardInterrupt:
+                        print("\nExiting interactive mode due to user interruption.")
+                        break
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
+                        # import traceback # Optionally, for more detailed error during development
+                        # traceback.print_exc()
+                # End of interactive loop
             else:
                 print("Agent creation failed.")
 
