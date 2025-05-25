@@ -196,56 +196,53 @@ if __name__ == '__main__':
                 print("\nEntering interactive mode. Type 'quit' or 'exit' to end.")
                 while True:
                     try:
+                        print("\nAgent is ready for your input...") # Added
                         user_input = input("You: ")
+                        print(f"DEBUG: Received user input: '{user_input}'") # Added
+
                         if user_input.lower() in ['quit', 'exit']:
                             print("Exiting interactive mode.")
                             break
                         
-                        # IMPORTANT: Interact with the agent. 
-                        # Try using `response = await agent.chat(user_input)`
-                        # or `response = await agent.process(user_input)`.
-                        # If these methods are not available or don't seem correct,
-                        # please look for a method on the `agent` object (of type LlmAgent)
-                        # that is designed for sending a user's text input and receiving a text response.
-                        # For example, it might be something like `response = await agent.process_utterance(user_input)`.
-                        # The response might be a string directly, or an object from which the response string needs to be extracted (e.g., response.text or response['output']).
-                        # Please adapt the response handling accordingly.
-                        
-                        # Example assuming response is a string:
-                        # response = await agent.chat(user_input) # Replace .chat() if needed
-                        # print(f"Agent: {response}")
+                        print("DEBUG: Sending input to agent for processing...") # Added
+                        # Agent interaction logic (agent.chat, agent.process, etc.)
+                        # ... (existing agent call logic) ...
+                        # Example:
+                        # response_obj = await agent.chat(user_input) 
+                        # print(f"DEBUG: Raw response object from agent: {response_obj}") # Added
 
-                        # Placeholder for the actual agent interaction call:
-                        # Ensure to use 'await' if the agent's chat/process method is asynchronous.
-                        # Based on ADK patterns, it's likely asynchronous.
-                        
-                        # --- Start of agent interaction logic to be implemented by worker ---
-                        # Try to find the correct method on the agent object.
-                        # This is a common pattern; the LlmAgent class is likely to have such a method.
-                        # The 'chat' method is a common name for such functionality.
+                        # --- Start of existing agent interaction logic ---
                         if hasattr(agent, 'chat') and callable(getattr(agent, 'chat')):
-                            response = await agent.chat(user_input) # Assuming response is directly usable
+                            response_obj = await agent.chat(user_input)
                         elif hasattr(agent, 'process') and callable(getattr(agent, 'process')):
-                            response = await agent.process(user_input)
+                            response_obj = await agent.process(user_input)
                         elif hasattr(agent, 'process_utterance') and callable(getattr(agent, 'process_utterance')):
-                            response = await agent.process_utterance(user_input)
+                            response_obj = await agent.process_utterance(user_input)
                         else:
-                            # If no common methods are found, inform that the method needs to be identified.
                             print("Agent: Error - Could not find a method to interact with the agent (e.g., chat, process, process_utterance). Further investigation is needed.")
-                            response = None
+                            response_obj = None
+                        # --- End of existing agent interaction logic ---
 
-                        if response:
-                            # Assuming response is a string or has a standard way to get text.
-                            # If it's an object, worker needs to find the attribute (e.g. response.text, response.content)
-                            if isinstance(response, str):
-                                print(f"Agent: {response}")
-                            elif hasattr(response, 'text'): # Common for response objects
-                                print(f"Agent: {response.text}")
-                            elif isinstance(response, dict) and 'output' in response: # ADK tools often return dicts
-                                print(f"Agent: {response['output']}")
+                        print(f"DEBUG: Raw response object from agent: {response_obj}") # Added
+
+                        if response_obj:
+                            agent_reply_text = None
+                            if isinstance(response_obj, str):
+                                agent_reply_text = response_obj
+                            elif hasattr(response_obj, 'text') and callable(getattr(response_obj, 'text')): # if text is a method
+                                agent_reply_text = response_obj.text()
+                            elif hasattr(response_obj, 'text') and isinstance(response_obj.text, str): # if text is an attribute
+                                agent_reply_text = response_obj.text
+                            elif isinstance(response_obj, dict) and 'output' in response_obj:
+                                agent_reply_text = response_obj['output']
                             else:
-                                print(f"Agent: Received response object - {type(response)}. Need to determine how to extract text.")
-                        # --- End of agent interaction logic ---
+                                # If the structure is unknown, convert to string for debugging
+                                agent_reply_text = str(response_obj) 
+                                print(f"DEBUG: Agent response is of type {type(response_obj)}, attempting to print as string.")
+
+                            print(f"Agent: {agent_reply_text}") # Existing print for final response
+                        else:
+                            print("Agent: No response received or error in processing.") # Modified for clarity
 
                     except KeyboardInterrupt:
                         print("\nExiting interactive mode due to user interruption.")
