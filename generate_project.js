@@ -36,6 +36,9 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Middleware to parse URL-encoded bodies
+app.use(express.urlencoded({ extended: false }));
+
 // Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -46,6 +49,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Simple route
 app.get('/', (req, res) => {
   res.render('index', { title: 'Home Page' });
+});
+
+// Route for the form
+app.get('/form', (req, res) => {
+  res.render('form-test', { title: 'Test Form' });
+});
+
+// Route to handle form submission
+app.post('/submit-form', (req, res) => {
+  const data = req.body.data; // 'data' is the name of the input field in the form
+  res.render('form-success', { title: 'Form Submission Successful', submittedData: data });
 });
 
 app.listen(port, () => {
@@ -73,6 +87,49 @@ app.listen(port, () => {
 </html>
   `;
   fs.writeFileSync(path.join(projectName, 'views', 'index.ejs'), indexEjsContent);
+
+  // Create views/form-test.ejs
+  const formTestEjsContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <h1><%= title %></h1>
+    <form action="/submit-form" method="POST">
+        <div>
+            <label for="dataInput">Enter Data:</label>
+            <input type="text" id="dataInput" name="data" required>
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+    <script src="/js/main.js"></script>
+</body>
+</html>
+  `;
+  fs.writeFileSync(path.join(projectName, 'views', 'form-test.ejs'), formTestEjsContent);
+
+  // Create views/form-success.ejs
+  const formSuccessEjsContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <h1><%= title %></h1>
+    <p>You submitted: <strong id="submittedData"><%= submittedData %></strong></p>
+    <a href="/form">Go back to form</a>
+    <script src="/js/main.js"></script>
+</body>
+</html>
+  `;
+  fs.writeFileSync(path.join(projectName, 'views', 'form-success.ejs'), formSuccessEjsContent);
 
   // Create public directory
   fs.mkdirSync(path.join(projectName, 'public'));
