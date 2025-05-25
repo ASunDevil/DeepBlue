@@ -5,7 +5,9 @@ import os # Added for GITHUB_TOKEN
 # Attempt to import ADK components.
 try:
     from google.adk.agents import LlmAgent
+    from google.adk.tools import Tool # Added for custom Python function tool
     from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, StdioServerParameters
+    from web_retriever import get_web_content # Import the new web retrieval function
 except ImportError as e:
     print(f"ADK Import Error: {e}")
     print("Please ensure you have the 'google-adk' package installed. You can install it using: pip install google-adk")
@@ -71,8 +73,21 @@ async def create_code_assistant_agent():
         else:
             print("Warning: GITHUB_TOKEN environment variable not set. Skipping GitHub tools.")
 
+        # Define and add the web content retrieval tool
+        try:
+            web_content_tool = Tool(
+                name="get_website_content",
+                description="Retrieves the textual content of a given URL. Input should be a single URL string.",
+                func=get_web_content,
+            )
+            all_mcp_tools.append(web_content_tool)
+            print(f"Successfully added custom tool: {web_content_tool.name}")
+        except Exception as e_custom_tool:
+            print(f"Error adding custom tool 'get_website_content': {e_custom_tool}")
+
+
         if not all_mcp_tools:
-            print("Warning: No tools were loaded from any MCP server. The agent will have no functional capabilities.")
+            print("Warning: No tools were loaded from any MCP server or defined locally. The agent will have no functional capabilities.")
 
     except FileNotFoundError as e:
         print(f"Error: MCP Server script or Docker command not found: {e}. Ensure 'python3' and 'docker' are installed and MCP scripts are in the current directory.")
@@ -88,9 +103,10 @@ async def create_code_assistant_agent():
             'You are a helpful AI code assistant. '
             'You have tools to execute bash commands, compile and run C++ code snippets, '
             'capture screenshots of webpages, interact with GitHub (e.g., read files, list issues), '
-            'and critique code (providing feedback on quality, style, and potential issues). ' # Updated instruction
+            'and critique code (providing feedback on quality, style, and potential issues). '
+            "You also have a tool to 'get_website_content' which takes a URL and returns its textual content. " # Updated instruction
             'Use these tools as needed to answer user requests, debug code, '
-            'fetch documentation, manage repositories, critique code, or perform other coding-related tasks.'
+            'fetch documentation, manage repositories, critique code, retrieve web content, or perform other coding-related tasks.'
         ),
         tools=all_mcp_tools,
     )
