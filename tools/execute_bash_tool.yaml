@@ -1,0 +1,49 @@
+identity:
+  name: "execute_bash"
+  author: "ADK Code Assistant Integration"
+  label:
+    en_US: "Execute Bash Command"
+    zh_Hans: "执行Bash命令"
+  description:
+    human:
+      en_US: "Executes a given bash command and returns its output, error, exit code, and timeout status. Use for general shell commands, file system operations, etc. Be cautious with commands that have side effects."
+      zh_Hans: "执行给定的bash命令并返回其输出、错误、退出代码和超时状态。用于常规shell命令、文件系统操作等。请谨慎使用具有副作用的命令。"
+    llm: "Tool to execute a bash shell command. Input is the command string. Optional inputs: 'timeout' (integer, default 60s) and 'working_directory' (string, default is agent's current dir). Returns JSON with 'stdout', 'stderr', 'exit_code', 'timed_out'."
+parameters:
+  - name: "command"
+    type: "string"
+    required: true
+    label:
+      en_US: "Command"
+      zh_Hans: "命令"
+    human_description:
+      en_US: "The bash command to execute (e.g., 'ls -l', 'echo Hello')."
+      zh_Hans: "要执行的bash命令（例如，'ls -l'，'echo Hello'）。"
+    llm_description: "The bash command string to be executed."
+    form: "llm"
+  - name: "timeout"
+    type: "number"
+    required: false
+    label:
+      en_US: "Timeout (seconds)"
+      zh_Hans: "超时（秒）"
+    human_description:
+      en_US: "Optional. Maximum time in seconds to wait for the command. Default 60."
+      zh_Hans: "可选。命令执行的最大等待时间（秒）。默认60。"
+    llm_description: "Optional execution timeout in seconds for the bash command. Default is 60."
+    form: "form"
+    default: 60
+  - name: "working_directory"
+    type: "string"
+    required: false
+    label:
+      en_US: "Working Directory"
+      zh_Hans: "工作目录"
+    human_description:
+      en_US: "Optional. The directory in which to execute the command. Defaults to current dir of the Dify plugin runner."
+      zh_Hans: "可选。执行命令的目录。默认为Dify插件运行器的当前目录。"
+    llm_description: "Optional working directory for the command execution. If not specified, uses a default directory."
+    form: "form"
+extra:
+  python:
+    source: "bash_tool_dify.py"
