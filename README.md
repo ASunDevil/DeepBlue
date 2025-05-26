@@ -494,6 +494,56 @@ The `adk_code_assistant.py` script uses `MCPToolset.from_server` with `StdioServ
 *   For the GitHub MCP Server, ADK launches a `docker run ... ghcr.io/github/github-mcp-server` command as a background process, passing the `GITHUB_TOKEN` to it.
 ADK then communicates with all these MCP server processes over their standard input/output. The tools discovered are provided to the ADK `LlmAgent`.
 
+### Using with Dify Agent Framework (Optional)
+
+The `adk_code_assistant.py` script can optionally use [Dify](https://dify.ai/) as its agent framework instead of the default ADK LlmAgent. This allows leveraging Dify's platform features, including its agent orchestration, plugin management, and API.
+
+#### Configuration for Dify Mode
+
+To run the assistant in Dify mode, you need to configure the following environment variables:
+
+1.  **`AGENT_FRAMEWORK`**: Set this to `dify`.
+    ```bash
+    export AGENT_FRAMEWORK="dify"
+    ```
+    If this variable is not set or set to `adk`, the assistant will default to using the ADK LlmAgent.
+
+2.  **`DIFY_API_URL`**: The base API URL of your Dify instance.
+    *   For Dify Cloud, this is typically `https://api.dify.ai/v1` (or just `https://api.dify.ai` and the client will append `/v1`).
+    *   For self-hosted instances, it might be like `http://your-dify-domain/api/v1` or `http://your-dify-domain/v1` depending on your setup. The client in `adk_code_assistant.py` currently appends `/v1/chat-messages` to this base URL.
+    ```bash
+    export DIFY_API_URL="your_dify_api_base_url"
+    ```
+
+3.  **`DIFY_API_KEY`**: The API key for your Dify application (Agent).
+    ```bash
+    export DIFY_API_KEY="your_dify_application_api_key"
+    ```
+
+#### Dify Tools Plugin (`dify_adk_tools_plugin`)
+
+When running in Dify mode, the assistant interacts with a Dify Agent. For this Dify Agent to use the familiar tools from this repository (like bash execution, C++ execution, etc.), these tools must be made available to Dify as **custom Dify plugins**.
+
+This repository includes the generated source code for a proof-of-concept Dify plugin (`adk_tools_provider.yaml`, `tools/execute_bash_tool.yaml`, `tools/bash_tool_dify.py`) that wraps the bash execution functionality. The worker would have printed these file contents when it created the PoC Dify tool. You would need to take that output and create the actual plugin files and directory structure.
+
+**To use the Dify mode effectively:**
+
+1.  **Create and Deploy Dify Plugins:** You will need to take the provided tool wrapper code (like the bash tool PoC and eventually wrappers for other tools like C++, Python execution, etc.) and package them into a Dify plugin structure. This plugin (e.g., named `dify_adk_tools_plugin`) then needs to be deployed to your Dify instance. Refer to the Dify documentation on plugin development and deployment. The Python code within these Dify plugins calls the original Python functions from this project (e.g., `bash_tool.run_bash_command`).
+2.  **Configure Dify Agent:** In your Dify platform, create an Agent application and configure it to use the deployed `dify_adk_tools_plugin` (or however you name it) and enable the specific tools (e.g., `execute_bash`). Ensure the Dify agent's prompts are set up to correctly utilize these tools.
+
+#### Running in Dify Mode
+
+Once the environment variables are set and your Dify agent is configured with the necessary tools plugin:
+
+1.  Navigate to the root directory of this repository.
+2.  Run the script:
+    ```bash
+    python3 adk_code_assistant.py
+    ```
+The script will detect `AGENT_FRAMEWORK="dify"` and attempt to connect to your Dify agent. You can then interact with it via the command line. The `adk_code_assistant.py` script will show "You (Dify): " when prompting for input.
+
+**Note:** The integration currently provides a client for chat interactions with a Dify agent and a proof-of-concept for one tool (bash). Implementing Dify plugin wrappers for all other tools (C++, Python, Go, web capture, RAG) is a future step to achieve full feature parity in Dify mode.
+
 ### How the Code Critique Tool is Used by the Agent
 If the `mcp_langflow_critique_server.py` is running and correctly configured with the `LANGFLOW_CRITIQUE_API_URL`, the `adk_code_assistant` will automatically have access to a `critique_code` tool. The agent's instruction prompt has been updated to inform it of this capability. You can then ask the assistant to critique code snippets as part of your interaction.
 
