@@ -1,0 +1,16 @@
+identity:
+  author: "ADK Code Assistant Integration"
+  name: "adk-code-assistant-tools"
+  label:
+    en_US: "ADK Code Assistant Tools"
+    zh_Hans: "ADK代码助手工具"
+  description:
+    en_US: "Provides tools for code execution (bash, C++, Python, Go), web screenshotting, and web content retrieval, mirroring adk_code_assistant capabilities."
+    zh_Hans: "提供代码执行（bash、C++、Python、Go）、网页截图和网页内容检索等工具，映射adk_code_assistant的功能。"
+  icon: "icon.svg" # User will need to provide an actual icon.svg file later.
+  tags:
+    - "development"
+    - "code"
+    - "utilities"
+tools:
+  - "tools/execute_bash_tool.yaml"

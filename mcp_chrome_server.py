@@ -27,6 +27,8 @@
 # Consider this a template for a highly privileged tool requiring maximum security scrutiny.
 
 from typing import Union, Dict, Any # For type hinting
+from datetime import datetime
+import traceback
 
 # Attempt to import FastMCP and Context, and install if missing
 try:
@@ -91,14 +93,17 @@ def capture_webpage(ctx: Context, url: str, width: int = 1280, height: int = 720
         Example successful return: Image(data=b'png_bytes', format='png')
         Example error return: {"error": "ScreenshotFailed", "message": "Details of the failure..."}
     """
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Entering capture_webpage tool with url='{url}', width={width}, height={height}")
     ctx.info(f"Attempting to capture webpage. URL: '{url}', Width: {width}, Height: {height}")
 
     # Default page_load_timeout_sec from take_screenshot is 30 seconds.
     # This can be exposed as another MCP tool parameter if needed.
     screenshot_result = take_screenshot(url=url, width=width, height=height)
+    print(f"DEBUG: [%{datetime.now().isoformat()}] take_screenshot returned: {screenshot_result}")
 
     if screenshot_result.get("image_data"):
         ctx.info(f"Screenshot successful for '{url}'. Page Title: '{screenshot_result.get('page_title', 'N/A')}', Actual URL: '{screenshot_result.get('actual_url', 'N/A')}'")
+        print(f"DEBUG: [%{datetime.now().isoformat()}] capture_webpage returning Image object.")
         return Image(data=screenshot_result["image_data"], format=screenshot_result["image_format"]) # image_format is "png"
     else:
         error_message = screenshot_result.get("error", "Unknown error during screenshot.")
@@ -108,17 +113,19 @@ def capture_webpage(ctx: Context, url: str, width: int = 1280, height: int = 720
         
         ctx.error(f"Screenshot failed for '{url}': {full_error_details}")
         # Return a dictionary that signals an error. FastMCP should handle this.
+        print(f"DEBUG: [%{datetime.now().isoformat()}] capture_webpage returning error: {{'error': 'ScreenshotFailed', 'message': '{full_error_details}'}}")
         return {"error": "ScreenshotFailed", "message": full_error_details}
 
 # Main block to run the server
 if __name__ == "__main__":
-    print("Starting ChromeScreenshotServer MCP server...")
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Starting ChromeScreenshotServer MCP server...")
     print("!!! CRITICAL SECURITY WARNING: This server allows fetching arbitrary URLs and is EXTREMELY DANGEROUS if not properly secured. For development/testing ONLY. !!!")
     print("Ensure Docker is running and accessible.")
     
     try:
         mcp_app.run() # Default host="127.0.0.1", port=8000
     except ImportError as e:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] ImportError during server run: {e}")
         if "uvicorn" in str(e).lower():
             print(f"Error running server: {e}")
             print("Make sure 'uvicorn' is installed. It should be a dependency of 'mcp[cli]'.")
@@ -126,6 +133,8 @@ if __name__ == "__main__":
         else:
             print(f"An import error occurred: {e}. Ensure 'mcp[cli]' and its dependencies are installed.")
     except Exception as e:
+        formatted_traceback = traceback.format_exc()
+        print(f"DEBUG: [%{datetime.now().isoformat()}] An unexpected exception occurred during server run: {e}\nTraceback:\n{formatted_traceback}")
         print(f"An unexpected error occurred while trying to run the server: {e}")
 
 ```

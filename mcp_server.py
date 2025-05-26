@@ -1,4 +1,6 @@
 from typing import Union # For Python 3.9+ compatibility with str | None
+from datetime import datetime
+import traceback
 
 # Attempt to import FastMCP and Context, and install if missing
 try:
@@ -82,6 +84,7 @@ def execute_bash(ctx: Context, command: str, timeout: int = 60, working_director
         - timed_out (bool): True if the command execution exceeded the 'timeout' value
                             and was terminated, False otherwise.
     """
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Entering execute_bash tool with command='{command}', timeout={timeout}, working_directory='{working_directory}'")
     # Log the attempt to execute the command using the context.
     # Caller information might be available in ctx depending on MCP server setup and auth.
     # For now, we log the command details.
@@ -89,23 +92,29 @@ def execute_bash(ctx: Context, command: str, timeout: int = 60, working_director
 
     # The run_bash_command function from bash_tool.py already handles
     # working_directory=None by defaulting to the current working directory.
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Calling run_bash_command with command='{command}', timeout={timeout}, working_directory='{working_directory}'")
     result = run_bash_command(command=command, timeout=timeout, working_directory=working_directory)
+    print(f"DEBUG: [%{datetime.now().isoformat()}] run_bash_command returned: {result}")
 
     # Log the outcome
     ctx.info(f"Command execution result: {{'exit_code': {result['exit_code']}, 'timed_out': {result['timed_out']}}}")
 
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting execute_bash tool with result: {result}")
     return result
 
 # Main block to run the server
 if __name__ == "__main__":
-    print("Starting BashToolServer MCP server...")
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Starting BashToolServer MCP server...")
     # The mcp_app.run() method typically starts a Uvicorn server for development.
     # Ensure 'uvicorn' and 'fastapi' are installed as dependencies of 'mcp[cli]'.
     try:
         mcp_app.run()
     except ImportError as e:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] ImportError during server run: {e}")
         print(f"Error running server: {e}")
         print("Make sure 'uvicorn' is installed. It should be a dependency of 'mcp[cli]'.")
         print("You might need to run: pip install \"mcp[cli]\" uvicorn")
     except Exception as e:
+        formatted_traceback = traceback.format_exc()
+        print(f"DEBUG: [%{datetime.now().isoformat()}] An unexpected exception occurred during server run: {e}\nTraceback:\n{formatted_traceback}")
         print(f"An unexpected error occurred while trying to run the server: {e}")

@@ -4,6 +4,8 @@ import os
 import shutil
 import uuid
 import time # For a brief sleep if needed for cleanup
+from datetime import datetime
+import traceback
 
 # Default resource limits for Docker execution
 DEFAULT_CPU_LIMIT = "1.0"  # Number of CPUs
@@ -13,6 +15,7 @@ DEFAULT_PYTHON_IMAGE = "python:3.10-slim" # Default Python image for Docker
 def _execute_command(command_args, timeout_seconds=None, cwd=None, capture_output=True, text=True, **kwargs):
     # Helper to run a subprocess command.
     # Returns a tuple: (CompletedProcess object, timed_out_boolean)
+    print(f"DEBUG: [%{datetime.now().isoformat()}] _execute_command called with command_args={command_args}, timeout_seconds={timeout_seconds}, cwd={cwd}")
     try:
         process = subprocess.run(
             command_args,
@@ -23,8 +26,10 @@ def _execute_command(command_args, timeout_seconds=None, cwd=None, capture_outpu
             check=False, 
             **kwargs
         )
+        print(f"DEBUG: [%{datetime.now().isoformat()}] _execute_command completed successfully. Return code: {process.returncode}")
         return process, False 
     except subprocess.TimeoutExpired as e:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] _execute_command timed out for command: {command_args}")
         return subprocess.CompletedProcess(
             args=command_args, 
             returncode=-1, 
@@ -32,6 +37,7 @@ def _execute_command(command_args, timeout_seconds=None, cwd=None, capture_outpu
             stderr=e.stderr.decode(errors='ignore') if e.stderr else "Execution timed out."
         ), True
     except FileNotFoundError as e:
+        print(f"DEBUG: [%{datetime.now().isoformat()}] _execute_command FileNotFoundError: {e.filename} for command: {command_args}")
         return subprocess.CompletedProcess(
             args=command_args,
             returncode=-1, 
@@ -39,6 +45,8 @@ def _execute_command(command_args, timeout_seconds=None, cwd=None, capture_outpu
             stderr=f"Command not found: {e.filename}" # Corrected f-string
         ), False
     except Exception as e: 
+        formatted_traceback = traceback.format_exc()
+        print(f"DEBUG: [%{datetime.now().isoformat()}] _execute_command encountered an exception for command {command_args}: {e}\nTraceback:\n{formatted_traceback}")
         return subprocess.CompletedProcess(
             args=command_args,
             returncode=-1,
@@ -70,6 +78,7 @@ def run_python_code(code: str, requirements: list[str] = None, timeout: int = 60
             'timed_out': Boolean, True if execution timed out.
             'error': A high-level error message if setup or Docker interaction failed before code execution.
     """
+    print(f"DEBUG: [%{datetime.now().isoformat()}] Entering run_python_code with code='{code[:100]}...', requirements={requirements}, timeout={timeout}, python_image='{python_image}', cpu_limit='{cpu_limit}', memory_limit='{memory_limit}'")
     result = {
         "stdout": "", "stderr": "", "exit_code": -1, 
         "timed_out": False, "error": None 
@@ -82,22 +91,29 @@ def run_python_code(code: str, requirements: list[str] = None, timeout: int = 60
 
     try:
         temp_dir = tempfile.mkdtemp(prefix=f"pyrunner_{exec_id}_") # Corrected f-string
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Created temporary directory: {temp_dir}")
         
         with open(os.path.join(temp_dir, "main.py"), "w", encoding="utf-8") as f:
             f.write(code)
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Python code written to {os.path.join(temp_dir, 'main.py')}")
 
         dockerfile_parts = [f"FROM {python_image}", "WORKDIR /app", "COPY main.py ."] # Corrected f-string
         if requirements:
             with open(os.path.join(temp_dir, "requirements.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(requirements))
+            print(f"DEBUG: [%{datetime.now().isoformat()}] requirements.txt written to {os.path.join(temp_dir, 'requirements.txt')}")
             dockerfile_parts.extend(["COPY requirements.txt .", "RUN pip install --no-cache-dir -r requirements.txt"])
         dockerfile_parts.append('CMD ["python", "-u", "main.py"]')
+        
+        dockerfile_content_for_log = "\n".join(dockerfile_parts)
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Dockerfile content:\n{dockerfile_content_for_log}")
 
         with open(os.path.join(temp_dir, "Dockerfile"), "w", encoding="utf-8") as f:
             f.write("\n".join(dockerfile_parts))
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Dockerfile written to {os.path.join(temp_dir, 'Dockerfile')}")
 
         build_command = ["docker", "build", "-t", docker_image_tag, "-f", os.path.join(temp_dir, "Dockerfile"), temp_dir]
-        print(f"Building Docker image {docker_image_tag} with command: {' '.join(build_command)}") # Corrected f-string
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Building Docker image {docker_image_tag} with command: {' '.join(build_command)}")
         
         build_process_result, build_timed_out = _execute_command(build_command, timeout_seconds=300) 
 
@@ -105,23 +121,25 @@ def run_python_code(code: str, requirements: list[str] = None, timeout: int = 60
             result['error'] = "Docker image build timed out."
             result['stderr'] = build_process_result.stderr
             result['timed_out'] = True
+            print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_python_code (build timeout) with result: {result}")
             return result
         
         if build_process_result.returncode != 0:
             result['error'] = "Docker image build failed."
             result['stderr'] = f"Build STDOUT:\n{build_process_result.stdout}\n\nBuild STDERR:\n{build_process_result.stderr}" # Corrected f-string
             result['exit_code'] = build_process_result.returncode
+            print(f"DEBUG: [%{datetime.now().isoformat()}] Exiting run_python_code (build failed) with result: {result}")
             return result
         
         image_built = True
-        print(f"Docker image {docker_image_tag} built successfully.") # Corrected f-string
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Docker image {docker_image_tag} built successfully.")
 
         run_command = [
             "docker", "run", "--rm", "--network=none",
             f"--cpus={cpu_limit}", f"--memory={memory_limit}", # Corrected f-strings
             docker_image_tag
         ]
-        print(f"Running Docker container with command: {' '.join(run_command)} (timeout: {timeout}s)") # Corrected f-string
+        print(f"DEBUG: [%{datetime.now().isoformat()}] Running Docker container with command: {' '.join(run_command)} (timeout: {timeout}s)")
         
         run_process_result, run_timed_out = _execute_command(run_command, timeout_seconds=timeout)
 
@@ -157,10 +175,12 @@ def run_python_code(code: str, requirements: list[str] = None, timeout: int = 60
             except Exception as e:
                 print(f"Warning: Failed to remove temporary directory {temp_dir}: {str(e)}") # Corrected f-string
 
+    print(f"DEBUG: run_python_code returning: {result}")
     return result
 
 # Keep the __main__ example usage block as it was for testing
 if __name__ == '__main__':
+    print("DEBUG: Starting python_runner.py example usage...")
     print("--- Example 1: Simple print ---")
     example_code_1 = "print('Hello from Python runner!')\nprint('This is a test.')"
     output_1 = run_python_code(example_code_1)
