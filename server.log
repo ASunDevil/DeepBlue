@@ -1,0 +1,121 @@
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 316-492-473
+(2589) wsgi starting up on http://0.0.0.0:5000
+(2589) accepted ('127.0.0.1', 56732)
+127.0.0.1 - - [22/Dec/2025 06:49:02] "GET / HTTP/1.1" 200 1872 0.016239
+(2589) accepted ('127.0.0.1', 56326)
+127.0.0.1 - - [22/Dec/2025 06:49:33] "GET /socket.io/?transport=polling&EIO=4&t=1766386173.8947852 HTTP/1.1" 200 300 0.000520
+INFO:__main__:Client connected: Gl4KRzGTa8UfxG59AAAB
+127.0.0.1 - - [22/Dec/2025 06:49:33] "POST /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA HTTP/1.1" 200 167 0.001265
+(2589) accepted ('127.0.0.1', 56328)
+127.0.0.1 - - [22/Dec/2025 06:49:33] "GET /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA&t=1766386173.9061723 HTTP/1.1" 200 213 0.000258
+127.0.0.1 - - [22/Dec/2025 06:49:33] "POST /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA HTTP/1.1" 200 167 0.000290
+127.0.0.1 - - [22/Dec/2025 06:49:33] "GET /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA&t=1766386173.9116068 HTTP/1.1" 200 245 0.002191
+127.0.0.1 - - [22/Dec/2025 06:49:34] "POST /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA HTTP/1.1" 200 167 0.000308
+127.0.0.1 - - [22/Dec/2025 06:49:34] "GET /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA&t=1766386173.9162147 HTTP/1.1" 200 406 0.999397
+(2589) accepted ('127.0.0.1', 56338)
+127.0.0.1 - - [22/Dec/2025 06:49:35] "GET /socket.io/?transport=polling&EIO=4&t=1766386175.9133847 HTTP/1.1" 200 300 0.000366
+INFO:__main__:Client connected: J1Vzqh5X17lMaRsAAAAD
+127.0.0.1 - - [22/Dec/2025 06:49:35] "POST /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC HTTP/1.1" 200 167 0.000936
+(2589) accepted ('127.0.0.1', 56352)
+127.0.0.1 - - [22/Dec/2025 06:49:35] "GET /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC&t=1766386175.9201233 HTTP/1.1" 200 213 0.000197
+127.0.0.1 - - [22/Dec/2025 06:49:35] "POST /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC HTTP/1.1" 200 167 0.000314
+127.0.0.1 - - [22/Dec/2025 06:49:35] "GET /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC&t=1766386175.925143 HTTP/1.1" 200 346 0.002151
+127.0.0.1 - - [22/Dec/2025 06:49:35] "GET /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA&t=1766386174.9180048 HTTP/1.1" 200 303 1.009548
+127.0.0.1 - - [22/Dec/2025 06:49:36] "POST /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC HTTP/1.1" 200 167 0.000373
+127.0.0.1 - - [22/Dec/2025 06:49:36] "GET /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC&t=1766386175.9313495 HTTP/1.1" 200 1001 0.997374
+127.0.0.1 - - [22/Dec/2025 06:49:36] "GET /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA&t=1766386175.9304645 HTTP/1.1" 200 898 0.998535
+127.0.0.1 - - [22/Dec/2025 06:49:37] "POST /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA HTTP/1.1" 200 167 0.000315
+127.0.0.1 - - [22/Dec/2025 06:49:37] "GET /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA&t=1766386176.9345527 HTTP/1.1" 200 799 0.994625
+127.0.0.1 - - [22/Dec/2025 06:49:37] "GET /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC&t=1766386176.9333086 HTTP/1.1" 200 799 0.995915
+127.0.0.1 - - [22/Dec/2025 06:49:38] "POST /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC HTTP/1.1" 200 167 0.000380
+127.0.0.1 - - [22/Dec/2025 06:49:38] "GET /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA&t=1766386177.9326422 HTTP/1.1" 200 823 0.996778
+127.0.0.1 - - [22/Dec/2025 06:49:38] "GET /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC&t=1766386177.933636 HTTP/1.1" 200 823 0.996120
+INFO:__main__:Client disconnected: Gl4KRzGTa8UfxG59AAAB
+127.0.0.1 - - [22/Dec/2025 06:49:39] "POST /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA HTTP/1.1" 200 167 0.000918
+127.0.0.1 - - [22/Dec/2025 06:49:39] "GET /socket.io/?transport=polling&EIO=4&sid=Bt53DxaeNBJOaOJqAAAA&t=1766386178.9324994 HTTP/1.1" 200 180 0.997053
+INFO:__main__:Client disconnected: J1Vzqh5X17lMaRsAAAAD
+127.0.0.1 - - [22/Dec/2025 06:49:39] "POST /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC HTTP/1.1" 200 167 0.001025
+127.0.0.1 - - [22/Dec/2025 06:49:39] "GET /socket.io/?transport=polling&EIO=4&sid=FyBnD0mkSJGj6BubAAAC&t=1766386178.9338253 HTTP/1.1" 200 180 0.999446
+(2589) accepted ('127.0.0.1', 55246)
+127.0.0.1 - - [22/Dec/2025 06:49:39] "GET /socket.io/?transport=polling&EIO=4&t=1766386179.9353478 HTTP/1.1" 200 300 0.000281
+(2589) accepted ('127.0.0.1', 55254)
+INFO:__main__:Client connected: AqknoOGlGxobGBW0AAAF
+127.0.0.1 - - [22/Dec/2025 06:49:39] "POST /socket.io/?transport=polling&EIO=4&sid=Shez2yfVlfgZceHkAAAE HTTP/1.1" 200 167 0.000805
+127.0.0.1 - - [22/Dec/2025 06:49:39] "GET /socket.io/?transport=polling&EIO=4&sid=Shez2yfVlfgZceHkAAAE&t=1766386179.9408476 HTTP/1.1" 200 213 0.003280
+127.0.0.1 - - [22/Dec/2025 06:49:39] "POST /socket.io/?transport=polling&EIO=4&sid=Shez2yfVlfgZceHkAAAE HTTP/1.1" 200 167 0.000212
+127.0.0.1 - - [22/Dec/2025 06:49:39] "GET /socket.io/?transport=polling&EIO=4&sid=Shez2yfVlfgZceHkAAAE&t=1766386179.9466934 HTTP/1.1" 200 346 0.001830
+127.0.0.1 - - [22/Dec/2025 06:49:40] "POST /socket.io/?transport=polling&EIO=4&sid=Shez2yfVlfgZceHkAAAE HTTP/1.1" 200 167 0.000302
+127.0.0.1 - - [22/Dec/2025 06:49:40] "GET /socket.io/?transport=polling&EIO=4&sid=Shez2yfVlfgZceHkAAAE&t=1766386179.9507372 HTTP/1.1" 200 508 0.998456
+127.0.0.1 - - [22/Dec/2025 06:49:41] "POST /socket.io/?transport=polling&EIO=4&sid=Shez2yfVlfgZceHkAAAE HTTP/1.1" 200 167 0.000363
+127.0.0.1 - - [22/Dec/2025 06:49:41] "GET /socket.io/?transport=polling&EIO=4&sid=Shez2yfVlfgZceHkAAAE&t=1766386180.9518697 HTTP/1.1" 200 390 0.998606
+INFO:__main__:Client disconnected: AqknoOGlGxobGBW0AAAF
+127.0.0.1 - - [22/Dec/2025 06:49:43] "POST /socket.io/?transport=polling&EIO=4&sid=Shez2yfVlfgZceHkAAAE HTTP/1.1" 200 167 0.001008
+127.0.0.1 - - [22/Dec/2025 06:49:43] "GET /socket.io/?transport=polling&EIO=4&sid=Shez2yfVlfgZceHkAAAE&t=1766386181.953307 HTTP/1.1" 200 180 1.996473
+INFO:werkzeug: * Detected change in '/app/renju_app/game_logic.py', reloading
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 316-492-473
+(3626) wsgi starting up on http://0.0.0.0:5000
+(3626) accepted ('127.0.0.1', 44428)
+127.0.0.1 - - [22/Dec/2025 06:50:22] "GET /socket.io/?transport=polling&EIO=4&t=1766386222.0045354 HTTP/1.1" 200 300 0.000459
+INFO:__main__:Client connected: RzkcxS_owAr-jGhiAAAB
+127.0.0.1 - - [22/Dec/2025 06:50:22] "POST /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA HTTP/1.1" 200 167 0.001773
+(3626) accepted ('127.0.0.1', 44436)
+127.0.0.1 - - [22/Dec/2025 06:50:22] "GET /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA&t=1766386222.0146484 HTTP/1.1" 200 213 0.000244
+127.0.0.1 - - [22/Dec/2025 06:50:22] "POST /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA HTTP/1.1" 200 167 0.001075
+127.0.0.1 - - [22/Dec/2025 06:50:22] "GET /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA&t=1766386222.018736 HTTP/1.1" 200 245 0.001135
+127.0.0.1 - - [22/Dec/2025 06:50:23] "POST /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA HTTP/1.1" 200 167 0.000369
+127.0.0.1 - - [22/Dec/2025 06:50:23] "GET /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA&t=1766386222.0232086 HTTP/1.1" 200 406 0.998617
+(3626) accepted ('127.0.0.1', 44446)
+127.0.0.1 - - [22/Dec/2025 06:50:24] "GET /socket.io/?transport=polling&EIO=4&t=1766386224.0199773 HTTP/1.1" 200 300 0.000464
+INFO:__main__:Client connected: SBE54VHeMV8MEi59AAAD
+127.0.0.1 - - [22/Dec/2025 06:50:24] "POST /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC HTTP/1.1" 200 167 0.000897
+(3626) accepted ('127.0.0.1', 44454)
+127.0.0.1 - - [22/Dec/2025 06:50:24] "GET /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC&t=1766386224.0259612 HTTP/1.1" 200 213 0.000228
+127.0.0.1 - - [22/Dec/2025 06:50:24] "POST /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC HTTP/1.1" 200 167 0.000264
+127.0.0.1 - - [22/Dec/2025 06:50:24] "GET /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC&t=1766386224.0313592 HTTP/1.1" 200 346 0.001945
+127.0.0.1 - - [22/Dec/2025 06:50:24] "GET /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA&t=1766386223.0244246 HTTP/1.1" 200 303 1.009113
+127.0.0.1 - - [22/Dec/2025 06:50:25] "POST /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC HTTP/1.1" 200 167 0.000556
+127.0.0.1 - - [22/Dec/2025 06:50:25] "GET /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC&t=1766386224.0372941 HTTP/1.1" 200 1001 0.998195
+127.0.0.1 - - [22/Dec/2025 06:50:25] "GET /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA&t=1766386224.036473 HTTP/1.1" 200 898 0.999245
+127.0.0.1 - - [22/Dec/2025 06:50:26] "POST /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA HTTP/1.1" 200 167 0.000308
+127.0.0.1 - - [22/Dec/2025 06:50:26] "GET /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA&t=1766386225.039505 HTTP/1.1" 200 799 0.995442
+127.0.0.1 - - [22/Dec/2025 06:50:26] "GET /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC&t=1766386225.0396428 HTTP/1.1" 200 799 0.994720
+127.0.0.1 - - [22/Dec/2025 06:50:27] "POST /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC HTTP/1.1" 200 167 0.000486
+127.0.0.1 - - [22/Dec/2025 06:50:27] "GET /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA&t=1766386226.0383363 HTTP/1.1" 200 823 0.997289
+127.0.0.1 - - [22/Dec/2025 06:50:27] "GET /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC&t=1766386226.0392406 HTTP/1.1" 200 823 0.996794
+INFO:__main__:Client disconnected: RzkcxS_owAr-jGhiAAAB
+127.0.0.1 - - [22/Dec/2025 06:50:28] "POST /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA HTTP/1.1" 200 167 0.001029
+127.0.0.1 - - [22/Dec/2025 06:50:28] "GET /socket.io/?transport=polling&EIO=4&sid=62H3Dc-W-cggxyPeAAAA&t=1766386227.0387163 HTTP/1.1" 200 180 0.997055
+INFO:__main__:Client disconnected: SBE54VHeMV8MEi59AAAD
+127.0.0.1 - - [22/Dec/2025 06:50:28] "POST /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC HTTP/1.1" 200 167 0.000743
+127.0.0.1 - - [22/Dec/2025 06:50:28] "GET /socket.io/?transport=polling&EIO=4&sid=6p4V-jkSslUGR4gUAAAC&t=1766386227.0400217 HTTP/1.1" 200 180 0.999678
+(3626) accepted ('127.0.0.1', 44464)
+127.0.0.1 - - [22/Dec/2025 06:50:28] "GET /socket.io/?transport=polling&EIO=4&t=1766386228.0419378 HTTP/1.1" 200 300 0.000344
+INFO:__main__:Client connected: rwvTS0myNv-_L-HMAAAF
+127.0.0.1 - - [22/Dec/2025 06:50:28] "POST /socket.io/?transport=polling&EIO=4&sid=UnZGCAuHh5qaxbjLAAAE HTTP/1.1" 200 167 0.002445
+(3626) accepted ('127.0.0.1', 44472)
+127.0.0.1 - - [22/Dec/2025 06:50:28] "GET /socket.io/?transport=polling&EIO=4&sid=UnZGCAuHh5qaxbjLAAAE&t=1766386228.04805 HTTP/1.1" 200 213 0.000191
+127.0.0.1 - - [22/Dec/2025 06:50:28] "POST /socket.io/?transport=polling&EIO=4&sid=UnZGCAuHh5qaxbjLAAAE HTTP/1.1" 200 167 0.000247
+127.0.0.1 - - [22/Dec/2025 06:50:28] "GET /socket.io/?transport=polling&EIO=4&sid=UnZGCAuHh5qaxbjLAAAE&t=1766386228.052385 HTTP/1.1" 200 346 0.002492
+127.0.0.1 - - [22/Dec/2025 06:50:29] "POST /socket.io/?transport=polling&EIO=4&sid=UnZGCAuHh5qaxbjLAAAE HTTP/1.1" 200 167 0.000450
+127.0.0.1 - - [22/Dec/2025 06:50:29] "GET /socket.io/?transport=polling&EIO=4&sid=UnZGCAuHh5qaxbjLAAAE&t=1766386228.0571263 HTTP/1.1" 200 508 0.999184
+127.0.0.1 - - [22/Dec/2025 06:50:30] "POST /socket.io/?transport=polling&EIO=4&sid=UnZGCAuHh5qaxbjLAAAE HTTP/1.1" 200 167 0.000318
+127.0.0.1 - - [22/Dec/2025 06:50:30] "GET /socket.io/?transport=polling&EIO=4&sid=UnZGCAuHh5qaxbjLAAAE&t=1766386229.0587866 HTTP/1.1" 200 388 0.998839
+INFO:__main__:Client disconnected: rwvTS0myNv-_L-HMAAAF
+127.0.0.1 - - [22/Dec/2025 06:50:32] "POST /socket.io/?transport=polling&EIO=4&sid=UnZGCAuHh5qaxbjLAAAE HTTP/1.1" 200 167 0.000991
+127.0.0.1 - - [22/Dec/2025 06:50:32] "GET /socket.io/?transport=polling&EIO=4&sid=UnZGCAuHh5qaxbjLAAAE&t=1766386230.060768 HTTP/1.1" 200 180 1.995787
+(3626) accepted ('127.0.0.1', 49916)
+127.0.0.1 - - [22/Dec/2025 06:51:08] "GET / HTTP/1.1" 200 1896 0.006846
+127.0.0.1 - - [22/Dec/2025 06:51:08] "GET /static/css/style.css HTTP/1.1" 200 1209 0.008491
+127.0.0.1 - - [22/Dec/2025 06:51:08] "GET /static/js/main.js HTTP/1.1" 200 6126 0.001375
+127.0.0.1 - - [22/Dec/2025 06:51:08] "GET /socket.io/?EIO=4&transport=polling&t=Pj4qteE HTTP/1.1" 200 300 0.000413
+INFO:__main__:Client connected: l2-_4p2lJS0JS74dAAAH
+127.0.0.1 - - [22/Dec/2025 06:51:08] "POST /socket.io/?EIO=4&transport=polling&t=Pj4qteb&sid=57_JAO-M_CnPl7Q6AAAG HTTP/1.1" 200 219 0.001064
+127.0.0.1 - - [22/Dec/2025 06:51:08] "GET /socket.io/?EIO=4&transport=polling&t=Pj4qtf0&sid=57_JAO-M_CnPl7Q6AAAG HTTP/1.1" 200 213 0.000938
+(3626) accepted ('127.0.0.1', 49920)
+127.0.0.1 - - [22/Dec/2025 06:51:08] "GET /socket.io/?EIO=4&transport=polling&t=Pj4qtfn&sid=57_JAO-M_CnPl7Q6AAAG HTTP/1.1" 200 181 0.000199
+INFO:__main__:Client disconnected: l2-_4p2lJS0JS74dAAAH
+127.0.0.1 - - [22/Dec/2025 06:51:09] "GET /socket.io/?EIO=4&transport=websocket&sid=57_JAO-M_CnPl7Q6AAAG HTTP/1.1" 200 0 0.669350
